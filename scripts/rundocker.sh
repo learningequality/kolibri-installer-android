@@ -2,6 +2,7 @@
 
 CONTAINER_HOME=/home/kivy
 CONTAINER_NAME=android_container
+APK_CONTAINER_PATH="${CONTAINER_HOME}/dist/"
 
 # create the container to be used throughout the script
 echo -ne "Creating container ${CONTAINER_NAME} \n\t id: "
@@ -32,9 +33,13 @@ fi
 echo "Starting ${CONTAINER_NAME}"
 docker start -i ${CONTAINER_NAME}
 
+# check env var to determine the apk path
+if [ "${P4A_RELEASE_KEYSTORE}" == "/home/kivy/" ]; then
+  APK_CONTAINER_PATH=${CONTAINER_HOME}
+fi
 # copy the apk to our host. Handles permissions.
-echo -e "Coping APK \n\t From ${CONTAINER_NAME}:${CONTAINER_HOME}/dist/ to ${PWD}"
-docker cp ${CONTAINER_NAME}:${CONTAINER_HOME}/dist/ .
+echo -e "Coping APK \n\t From ${CONTAINER_NAME}:${APK_CONTAINER_PATH} to ${PWD}"
+docker cp ${CONTAINER_NAME}:${APK_CONTAINER_PATH} .
 
 # manually remove the container afterward
 echo -n "Removing "
