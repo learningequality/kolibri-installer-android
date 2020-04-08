@@ -2,4 +2,6 @@ steps:
   - block: "Build :android:?"
     if: build.source == "trigger_job"
   - label: "Build Android App"
+    env:
+        KOLIBRI_ANDROID_BUILD_MODE: ${KOLIBRI_ANDROID_BUILD_MODE:-dev}
     command: ".buildkite/build.sh"
