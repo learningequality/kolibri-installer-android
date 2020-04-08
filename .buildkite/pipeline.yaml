@@ -1,7 +1,6 @@
 steps:
   - block: "Build :android:?"
-    if: build.source == "trigger_job"
-  - label: "Build Android App"
-    env:
-        KOLIBRI_ANDROID_BUILD_MODE: ${KOLIBRI_ANDROID_BUILD_MODE:-dev}
+    # Autoblock only for non-release builds.
+    if: build.env("LE_KOLIBRI_RELEASE") != "false"
+  - label: "Build :android:"
     command: ".buildkite/build.sh"

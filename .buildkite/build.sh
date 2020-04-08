@@ -1,9 +1,14 @@
 #! /bin/bash
 set -eo pipefail
 
+export KOLIBRI_ANDROID_BUILD_MODE=dev
+
+if [[ $LE_KOLIBRI_RELEASE ]]
+then
+  KOLIBRI_ANDROID_BUILD_MODE=release
+fi
 
 echo "--- Downloading whl file"
-
 # Allows for building directly from pipeline or trigger
 if [[ $LE_TRIGGERED_FROM_BUILD_ID ]]
 then
