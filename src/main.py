@@ -24,7 +24,9 @@ REQUIRED_PLUGINS = [
 
 # These Kolibri plugins will be dynamically enabled if they are
 # available:
-OPTIONAL_PLUGINS = []
+OPTIONAL_PLUGINS = [
+    "kolibri_explore_plugin",
+]
 
 
 def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:

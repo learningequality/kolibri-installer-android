@@ -38,7 +38,7 @@ needs-android-dirs:
 
 # Clear out apks
 clean:
-	- rm -rf dist/*.apk src/kolibri tmpenv
+	- rm -rf dist/*.apk src/kolibri src/apps-bundle tmpenv
 
 deepclean: clean
 	python-for-android clean_dists
@@ -62,9 +62,17 @@ get-whl: clean-whl
 # Extract the whl file
 src/kolibri: clean
 	rm -r src/kolibri 2> /dev/null || true
-	unzip -qo "whl/kolibri*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
+	unzip -qo "whl/kolibri-*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
+	pip install --target=src --no-deps kolibri_explore_plugin
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
+
+.PHONY: apps-bundle.zip
+apps-bundle.zip:
+	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/download/v2.0.15/apps-bundle.zip
+
+src/apps-bundle: clean apps-bundle.zip
+	unzip -qo apps-bundle.zip -d src/apps-bundle
 
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
@@ -78,7 +86,7 @@ needs-version:
 .PHONY: kolibri.apk
 # Build the signed version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk: p4a_android_distro src/kolibri needs-version
+kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
@@ -91,7 +99,7 @@ kolibri.apk: p4a_android_distro src/kolibri needs-version
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk.unsigned: p4a_android_distro src/kolibri needs-version
+kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle needs-version
 	@echo "--- :android: Build APK (unsigned)"
 	p4a apk --arch=$(P4A_ARCH) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist

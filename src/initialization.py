@@ -38,6 +38,8 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"
 
 os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
+os.environ["KOLIBRI_APPS_BUNDLE_PATH"] = os.path.join(script_dir, "apps-bundle", "apps")
+
 Secure = autoclass("android.provider.Settings$Secure")
 
 node_id = Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
