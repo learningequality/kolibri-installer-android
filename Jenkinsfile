@@ -59,7 +59,7 @@ pipeline {
                     // related to the key alias within the keystore.
                     withEnv(
                         ['P4A_RELEASE_KEYALIAS=upload',
-                         'P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD']
+                         "P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD"]
                     ) {
                         sh 'make kolibri.aab'
                         archiveArtifacts artifacts: 'dist/*.aab'
