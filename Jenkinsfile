@@ -47,28 +47,26 @@ pipeline {
             }
         }
 
-        // FIXME: Uncomment when the AAB make target exists.
-        // https://github.com/learningequality/kolibri-installer-android/pull/112
-        // stage('Release AAB') {
-        //     steps {
-        //         withCredentials(
-        //             [[$class: 'VaultCertificateCredentialsBinding',
-        //               credentialsId: 'google-play-upload-key',
-        //               keyStoreVariable: 'P4A_RELEASE_KEYSTORE',
-        //               passwordVariable: 'P4A_RELEASE_KEYSTORE_PASSWD']]
-        //         ) {
-        //             // p4a expects a couple more environment variables
-        //             // related to the key alias within the keystore.
-        //             withEnv(
-        //                 ['P4A_RELEASE_KEYALIAS=upload',
-        //                  'P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD']
-        //             ) {
-        //                 sh 'make kolibri.aab'
-        //                 archiveArtifacts artifacts: 'dist/*.aab'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Release AAB') {
+            steps {
+                withCredentials(
+                    [[$class: 'VaultCertificateCredentialsBinding',
+                      credentialsId: 'google-play-upload-key',
+                      keyStoreVariable: 'P4A_RELEASE_KEYSTORE',
+                      passwordVariable: 'P4A_RELEASE_KEYSTORE_PASSWD']]
+                ) {
+                    // p4a expects a couple more environment variables
+                    // related to the key alias within the keystore.
+                    withEnv(
+                        ['P4A_RELEASE_KEYALIAS=upload',
+                         'P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD']
+                    ) {
+                        sh 'make kolibri.aab'
+                        archiveArtifacts artifacts: 'dist/*.aab'
+                    }
+                }
+            }
+        }
     }
 
     post {
