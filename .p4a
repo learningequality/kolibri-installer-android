@@ -1,7 +1,7 @@
 --window
 --bootstrap "webview"
---package "org.learningequality.Kolibri"
---name "Kolibri"
+--package "org.endlessos.Key"
+--name "Endless Key"
 --dist_name "kolibri"
 --private "src"
 --orientation sensor
@@ -17,6 +17,8 @@
 --presplash-color #FFFFFF
 --icon assets/icon.png
 --fileprovider-paths src/fileprovider_paths.xml
+--add-asset assets/loading-animation.gif:loading-animation.gif
+--add-asset assets/kolibri-icon.png:kolibri-icon.png
 --add-asset assets/_load.html:_load.html
 --whitelist ./allowlist.txt
 --blacklist ./blocklist.txt
