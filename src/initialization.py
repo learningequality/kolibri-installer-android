@@ -36,6 +36,10 @@ os.environ["KOLIBRI_HOME"] = get_home_folder()
 os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
 os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"
 
+AUTOPROVISION_FILE = os.path.join(script_dir, "automatic_provision.json")
+if os.path.exists(AUTOPROVISION_FILE):
+    os.environ["KOLIBRI_AUTOMATIC_PROVISION_FILE"] = AUTOPROVISION_FILE
+
 os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
 Secure = autoclass("android.provider.Settings$Secure")

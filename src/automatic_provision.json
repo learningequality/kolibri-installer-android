@@ -1,0 +1,25 @@
+{
+    "facility_name": "Endless",
+    "preset": "nonformal",
+    "facility_settings": {
+        "learner_can_edit_username": true,
+        "learner_can_edit_name": true,
+        "learner_can_edit_password": true,
+        "learner_can_sign_up": true,
+        "learner_can_delete_account": true,
+        "show_download_button_in_learn": true
+    },
+    "device_settings": {
+        "language_id": "en",
+        "landing_page": "learn",
+        "allow_guest_access": true,
+        "allow_peer_unlisted_channel_import": true,
+        "allow_learner_unassigned_resource_access": true,
+        "name": "Endless Learning",
+        "allow_other_browsers_to_connect": true
+    },
+    "superuser": {
+        "username": "admin",
+        "password": "admin"
+    }
+}
