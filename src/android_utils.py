@@ -45,9 +45,7 @@ def get_timezone_name():
 
 def start_service(service_name, service_args=None):
     service_args = service_args or {}
-    service = autoclass(
-        "org.learningequality.Kolibri.Service{}".format(service_name.title())
-    )
+    service = autoclass("org.endlessos.Key.Service{}".format(service_name.title()))
     service.start(PythonActivity.mActivity, json.dumps(dict(service_args)))
 
 
@@ -58,7 +56,7 @@ def get_service_args():
     return json.loads(os.environ.get("PYTHON_SERVICE_ARGUMENT") or "{}")
 
 
-def get_package_info(package_name="org.learningequality.Kolibri", flags=0):
+def get_package_info(package_name="org.endlessos.Key", flags=0):
     return get_activity().getPackageManager().getPackageInfo(package_name, flags)
 
 
@@ -106,7 +104,7 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     if path:
         uri = FileProvider.getUriForFile(
             Context.getApplicationContext(),
-            "org.learningequality.Kolibri.fileprovider",
+            "org.endlessos.Key.fileprovider",
             File(path),
         )
         parcelable = cast("android.os.Parcelable", uri)

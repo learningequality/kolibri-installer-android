@@ -130,11 +130,11 @@ run_docker: build_docker
 	env DOCKER="$(DOCKER)" ./scripts/rundocker.sh
 
 install:
-	$(ADB) uninstall org.learningequality.Kolibri || true 2> /dev/null
+	$(ADB) uninstall org.endlessos.Key || true 2> /dev/null
 	$(ADB) install dist/*-debug-*.apk
 
 logcat:
-	$(ADB) logcat | grep -i -E "python|kolibr| `$(ADB) shell ps | grep ' org.learningequality.Kolibri$$' | tr -s [:space:] ' ' | cut -d' ' -f2` " | grep -E -v "WifiTrafficPoller|localhost:5000|NetworkManagementSocketTagger|No jobs to start"
+	$(ADB) logcat | grep -i -E "python|kolibr| `$(ADB) shell ps | grep ' org.endlessos.Key$$' | tr -s [:space:] ' ' | cut -d' ' -f2` " | grep -E -v "WifiTrafficPoller|localhost:5000|NetworkManagementSocketTagger|No jobs to start"
 
 $(SDK)/cmdline-tools:
 	@echo "Downloading Android SDK build tools"
