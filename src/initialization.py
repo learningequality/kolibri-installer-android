@@ -36,6 +36,13 @@ os.environ["KOLIBRI_HOME"] = get_home_folder()
 os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
 os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"
 
+# Ensure that the pidfile is removed on startup
+PID_FILE = os.path.join(get_home_folder(), "server.pid")
+try:
+    os.unlink(PID_FILE)
+except FileNotFoundError:
+    pass
+
 AUTOPROVISION_FILE = os.path.join(script_dir, "automatic_provision.json")
 if os.path.exists(AUTOPROVISION_FILE):
     os.environ["KOLIBRI_AUTOMATIC_PROVISION_FILE"] = AUTOPROVISION_FILE
