@@ -14,7 +14,7 @@ repos:
         rev: v4.1.0
         hooks:
             -   id: trailing-whitespace
-                exclude: '^.+?\.template$'
+                exclude: '^.+?(\.template|\.patch)$'
             -   id: check-yaml
                 exclude: '^.+?\.template$'
             -   id: check-added-large-files
@@ -22,7 +22,7 @@ repos:
             -   id: debug-statements
                 exclude: '^.+?\.template$'
             -   id: end-of-file-fixer
-                exclude: '^.+?(\.json|\.template)$'
+                exclude: '^.+?(\.json|\.template|\.patch)$'
 
     -   repo: https://github.com/asottile/reorder_python_imports
         rev: v2.6.0
