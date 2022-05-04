@@ -8,6 +8,7 @@ from jnius import autoclass
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
 from kolibri.plugins.registry import registered_plugins
+from kolibri.plugins.utils import disable_plugin
 from kolibri.plugins.utils import enable_plugin
 from kolibri.utils.cli import initialize
 from kolibri.utils.server import _read_pid_file
@@ -16,17 +17,30 @@ from kolibri.utils.server import STATUS_RUNNING
 from kolibri.utils.server import wait_for_status
 from runnable import Runnable
 
+# These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
+# or OPTIONAL_PLUGINS:
+DISABLED_PLUGINS = [
+    "kolibri.plugins.learn",
+]
+
 # These Kolibri plugins must be enabled for the application to function
 # correctly:
 REQUIRED_PLUGINS = [
     "kolibri.plugins.app",
 ]
 
-# These Kolibri plugins will be dynamically enabled if they are
-# available:
+# These Kolibri plugins will be dynamically enabled if they are available:
 OPTIONAL_PLUGINS = [
     "kolibri_explore_plugin",
 ]
+
+
+def _disable_kolibri_plugin(plugin_name: str) -> bool:
+    if plugin_name in plugins_config.ACTIVE_PLUGINS:
+        logging.info(f"Disabling plugin {plugin_name}")
+        disable_plugin(plugin_name)
+
+    return True
 
 
 def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:
@@ -48,6 +62,9 @@ loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 logging.info("Initializing Kolibri and running any upgrade routines")
 
 loadUrl("file:///android_asset/_load.html")
+
+for plugin_name in DISABLED_PLUGINS:
+    _disable_kolibri_plugin(plugin_name)
 
 for plugin_name in REQUIRED_PLUGINS:
     _enable_kolibri_plugin(plugin_name)
