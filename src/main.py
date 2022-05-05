@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
@@ -71,6 +72,12 @@ for plugin_name in REQUIRED_PLUGINS:
 
 for plugin_name in OPTIONAL_PLUGINS:
     _enable_kolibri_plugin(plugin_name, optional=True)
+
+# Ensure that the pidfile is removed on startup
+try:
+    os.unlink(PID_FILE)
+except FileNotFoundError:
+    pass
 
 # we need to initialize Kolibri to allow us to access the app key
 initialize()
