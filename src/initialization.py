@@ -14,6 +14,8 @@ from jnius import autoclass
 
 # initialize logging before loading any third-party modules, as they may cause logging to get configured.
 logging.basicConfig(level=logging.DEBUG)
+jnius_logger = logging.getLogger("jnius")
+jnius_logger.setLevel(logging.INFO)
 
 apply_android_workarounds()
 
