@@ -77,7 +77,7 @@ src/kolibri: clean
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
-	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/download/v2.0.15/apps-bundle.zip
+	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip
 
 clean-apps-bundle:
 	- rm -rf src/apps-bundle
