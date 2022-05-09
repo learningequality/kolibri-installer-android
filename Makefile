@@ -44,7 +44,7 @@ needs-android-dirs:
 
 # Clear out apks
 clean:
-	- rm -rf dist/*.apk src/kolibri src/apps-bundle tmpenv
+	- rm -rf dist/*.apk src/kolibri tmpenv
 
 deepclean: clean
 	$(PYTHON_FOR_ANDROID) clean_dists
@@ -79,7 +79,10 @@ src/kolibri: clean
 apps-bundle.zip:
 	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/download/v2.0.15/apps-bundle.zip
 
-src/apps-bundle: clean apps-bundle.zip
+clean-apps-bundle:
+	- rm -rf src/apps-bundle
+
+src/apps-bundle: clean-apps-bundle apps-bundle.zip
 	unzip -qo apps-bundle.zip -d src/apps-bundle
 
 .PHONY: p4a_android_distro
