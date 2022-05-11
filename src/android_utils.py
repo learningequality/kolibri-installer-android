@@ -1,6 +1,8 @@
 import json
+import logging
 import os
 import re
+from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -8,6 +10,8 @@ from jnius import autoclass
 from jnius import cast
 from jnius import jnius
 
+
+logger = logging.getLogger(__name__)
 
 AndroidString = autoclass("java.lang.String")
 Context = autoclass("android.content.Context")
@@ -24,7 +28,21 @@ Timezone = autoclass("java.util.TimeZone")
 Uri = autoclass("android.net.Uri")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
+RELEASE = ANDROID_VERSION.RELEASE
 SDK_INT = ANDROID_VERSION.SDK_INT
+
+
+# Path.is_relative_to only on python 3.9+.
+if not hasattr(Path, "is_relative_to"):
+
+    def _path_is_relative_to(self, *other):
+        try:
+            self.relative_to(*other)
+            return True
+        except ValueError:
+            return False
+
+    Path.is_relative_to = _path_is_relative_to
 
 
 def is_service_context():
@@ -174,3 +192,91 @@ def get_signature_key_issuing_organization():
     signer = get_signature_key_issuer()
     orgs = re.findall(r"\bO=([^,]+)", signer)
     return orgs[0] if orgs else ""
+
+
+def is_external_app_path(path):
+    path = Path(path).resolve()
+    activity = get_activity()
+
+    for app_dir in activity.getExternalFilesDirs(None):
+        if app_dir is None or not Environment.isExternalStorageRemovable(app_dir):
+            continue
+        if path.is_relative_to(Path(app_dir.toString())):
+            return True
+    return False
+
+
+def _android11_ext_storage_workarounds():
+    """Workarounds for Android 11 external storage bugs
+
+    See https://issuetracker.google.com/issues/232290073 for details.
+    """
+    if RELEASE != "11":
+        return
+
+    from os import access as _os_access
+    from os import listdir as _os_listdir
+
+    logger.info("Applying Android 11 workarounds")
+
+    def access(path, mode, *, dir_fd=None, effective_ids=False, follow_symlinks=True):
+        can_access = _os_access(
+            path,
+            mode,
+            dir_fd=dir_fd,
+            effective_ids=effective_ids,
+            follow_symlinks=follow_symlinks,
+        )
+
+        # Workaround a bug on Android 11 where access with W_OK on an
+        # external app private directory returns EACCESS even though
+        # those directories are obviously writable for the app.
+        if (
+            not can_access
+            # If dir_fd is set, we can't determine the full path.
+            and dir_fd is None
+            # Both effective_ids and follow_symlinks use faccessat. For
+            # now don't bother handling those.
+            and not effective_ids
+            and follow_symlinks
+            # Finally, match on a writable test for an external directory.
+            and mode & os.W_OK
+            and os.path.isdir(path)
+            and is_external_app_path(path)
+        ):
+            logger.warning(
+                "Forcing os.access to True for writable test on external app directory %s",
+                path,
+            )
+            can_access = True
+
+        return can_access
+
+    def listdir(path=None):
+        try:
+            return _os_listdir(path)
+        except PermissionError as err:
+            # If given a path (not an open directory fd) in external app
+            # storage, ignore PermissionError and return an empty list
+            # to workaround an Android bug where opendir returns
+            # EACCESS. The empty list is not useful, but it's better
+            # than failing in a case that shouldn't.
+            if path is None:
+                path = "."
+            if isinstance(path, (str, bytes, os.PathLike)) and is_external_app_path(
+                path
+            ):
+                logger.warning(
+                    "Ignoring os.listdir error %s on external app directory",
+                    err,
+                )
+                return []
+
+            raise
+
+    os.access = access
+    os.listdir = listdir
+
+
+def apply_android_workarounds():
+    _android11_ext_storage_workarounds()
