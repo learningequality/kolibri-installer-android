@@ -6,3 +6,8 @@ from kolibri.deployment.default.settings.base import *  # noqa E402
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 52560000
+
+
+MIDDLEWARE = list(MIDDLEWARE) + [  # noqa F405
+    "middleware.AlwaysAuthenticatedMiddleware"
+]
