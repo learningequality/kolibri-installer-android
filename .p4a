@@ -22,3 +22,4 @@
 --add-asset assets/loadingScreen:loadingScreen
 --whitelist ./allowlist.txt
 --blacklist ./blocklist.txt
+--add-source src/java/
