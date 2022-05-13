@@ -5,6 +5,7 @@ import sys
 
 from android_utils import apply_android_workarounds
 from android_utils import get_activity
+from android_utils import get_endless_key_paths
 from android_utils import get_home_folder
 from android_utils import get_signature_key_issuing_organization
 from android_utils import get_timezone_name
@@ -36,6 +37,11 @@ os.environ["TZ"] = get_timezone_name()
 os.environ["LC_ALL"] = "en_US.UTF-8"
 
 os.environ["KOLIBRI_HOME"] = get_home_folder()
+
+endless_key_paths = get_endless_key_paths()
+if endless_key_paths is not None:
+    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = endless_key_paths["content_path"]
+
 os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
 os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"
 
