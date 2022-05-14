@@ -21,8 +21,12 @@ class AlwaysAuthenticatedMiddleware(MiddlewareMixin):
             user, created = FacilityUser.objects.get_or_create(
                 username=self.username, facility=facility
             )
-            DevicePermissions.objects.create(
-                user=user, is_superuser=False, can_manage_content=True
+            DevicePermissions.objects.update_or_create(
+                user=user,
+                defaults={
+                    "is_superuser": False,
+                    "can_manage_content": True,
+                },
             )
 
             user.backend = settings.AUTHENTICATION_BACKENDS[0]
