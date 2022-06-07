@@ -157,7 +157,7 @@ def provision_endless_key_database(endless_key_paths):
             return
         if not os.path.exists(home_folder):
             os.mkdir(home_folder)
-        if Environment.isExternalStorageManager():
+        if has_all_files_access():
             shutil.copy(endless_key_paths["db_path"], home_folder)
             logger.debug("EK database provisioned.")
         else:
