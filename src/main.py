@@ -4,6 +4,9 @@ import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
+from android_utils import ask_all_files_access
+from android_utils import get_endless_key_paths
+from android_utils import provision_endless_key_database
 from android_utils import start_service
 from jnius import autoclass
 from kolibri.plugins import config as plugins_config
@@ -55,6 +58,11 @@ def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:
 
     return True
 
+
+access_granted = ask_all_files_access()
+if access_granted:
+    endless_key_paths = get_endless_key_paths()
+    provision_endless_key_database(endless_key_paths)
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 

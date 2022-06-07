@@ -2,8 +2,14 @@ import json
 import logging
 import os
 import re
+import shutil
+import time
+from datetime import datetime
 from pathlib import Path
 
+from android.permissions import check_permission
+from android.permissions import Permission
+from android.permissions import request_permissions
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
@@ -24,6 +30,7 @@ NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
+Settings = autoclass("android.provider.Settings")
 Timezone = autoclass("java.util.TimeZone")
 Uri = autoclass("android.net.Uri")
 
@@ -105,6 +112,89 @@ def is_app_installed(app_id):
 def get_home_folder():
     kolibri_home_file = get_activity().getExternalFilesDir(None)
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
+
+
+def get_endless_key_paths():
+    def _get_directory_path(volume):
+        if SDK_INT < 30:
+            uuid = volume.getUuid()
+            if uuid is None:
+                return None
+            return os.path.join("/storage", uuid)
+        else:
+            directory_file = volume.getDirectory()
+            if directory_file is None:
+                return None
+            return directory_file.toString()
+
+    storageManager = get_activity().getSystemService(Context.STORAGE_SERVICE)
+    volumesList = storageManager.getStorageVolumes()
+    for i in range(volumesList.size()):
+        volume = volumesList.get(i)
+        state = volume.getState()
+        is_removable = volume.isRemovable()
+        directory_path = _get_directory_path(volume)
+        logger.debug(
+            f"Found volume UUID: {volume.getUuid()} state: {state} "
+            f" is removable: {is_removable} mount path: {directory_path}"
+        )
+        if is_removable and state == "mounted" and directory_path is not None:
+            kolibri_data_path = os.path.join(directory_path, "KOLIBRI_DATA")
+            content_path = os.path.join(kolibri_data_path, "content")
+            db_path = os.path.join(
+                kolibri_data_path, "preseeded_kolibri_home", "db.sqlite3"
+            )
+            if os.path.exists(content_path) and os.path.exists(db_path):
+                return {"content_path": content_path, "db_path": db_path}
+    return None
+
+
+def provision_endless_key_database(endless_key_paths):
+    if endless_key_paths is not None:
+        home_folder = get_home_folder()
+        if os.path.exists(os.path.join(home_folder, "db.sqlite3")):
+            logger.debug("EK database already exists, skipping.")
+            return
+        if not os.path.exists(home_folder):
+            os.mkdir(home_folder)
+        if has_all_files_access():
+            shutil.copy(endless_key_paths["db_path"], home_folder)
+            logger.debug("EK database provisioned.")
+        else:
+            logger.debug("EK database found in external storage bu user didn't allow.")
+
+
+def prompt_all_files_access():
+    if SDK_INT < 30:
+        request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+    else:
+        askIntent = Intent(
+            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+            Uri.parse("package:org.endlessos.Key"),
+        )
+        get_activity().startActivity(askIntent)
+
+
+def has_all_files_access():
+    if SDK_INT < 30:
+        return check_permission("android.permission.WRITE_EXTERNAL_STORAGE")
+    else:
+        return Environment.isExternalStorageManager()
+
+
+def ask_all_files_access():
+    timeout = False
+    if not has_all_files_access():
+        prompt_all_files_access()
+    start_time = datetime.now()
+    while not has_all_files_access() and not timeout:
+        time.sleep(0.5)
+        delta_time = datetime.now() - start_time
+        # FIXME: handle user denying access to external storage
+        # from the UI. For now just give up after 2 minutes.
+        timeout = delta_time.total_seconds() > 120
+
+    return not timeout
 
 
 def send_whatsapp_message(msg):
