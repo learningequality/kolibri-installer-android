@@ -1,6 +1,7 @@
 src/kolibri
 tmpenv
 whl/*
+assets/loadingScreen
 
 # File format for signing key
 *.jks
