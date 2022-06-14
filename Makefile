@@ -69,6 +69,27 @@ get-whl: clean-whl
 src/kolibri: clean
 	rm -r src/kolibri 2> /dev/null || true
 	unzip -qo "whl/kolibri-*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
+	# Cleanup:
+	rm -rf \
+	src/kolibri/dist/cext/cp27 \
+	src/kolibri/dist/cext/cp34 \
+	src/kolibri/dist/cext/cp35 \
+	src/kolibri/dist/cext/cp36 \
+	src/kolibri/dist/cext/cp37 \
+	src/kolibri/dist/cext/cp38 \
+	src/kolibri/dist/cext/*/Windows
+	rm -rf \
+	src/kolibri/dist/cheroot/test \
+	src/kolibri/dist/magicbus/test \
+	src/kolibri/dist/colorlog/tests \
+	src/kolibri/dist/django_js_reverse/tests \
+	src/kolibri/dist/future/tests \
+	src/kolibri/dist/ipware/tests \
+	src/kolibri/dist/more_itertools/tests \
+	src/kolibri/dist/past/tests \
+	src/kolibri/dist/sqlalchemy/testing
+	find src/kolibri -name '*.js.map' -exec rm '{}' '+'
+	# End of cleanup.
 	pip install --target=src --no-deps kolibri_explore_plugin
 	cp -r src/kolibri_explore_plugin/loadingScreen/ assets/
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
