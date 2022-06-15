@@ -70,6 +70,23 @@ src/kolibri: clean
 	rm -r src/kolibri 2> /dev/null || true
 	unzip -qo "whl/kolibri-*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
 	# Cleanup:
+	./scripts/cleanup-unused-locales.py -l \
+	src/kolibri/locale \
+	src/kolibri/dist/django/conf/locale \
+	src/kolibri/dist/django/contrib/admin/locale \
+	src/kolibri/dist/django/contrib/admindocs/locale \
+	src/kolibri/dist/django/contrib/auth/locale \
+	src/kolibri/dist/django/contrib/contenttypes/locale \
+	src/kolibri/dist/django/contrib/flatpages/locale \
+	src/kolibri/dist/django/contrib/gis/locale \
+	src/kolibri/dist/django/contrib/humanize/locale \
+	src/kolibri/dist/django/contrib/postgres/locale \
+	src/kolibri/dist/django/contrib/redirects/locale \
+	src/kolibri/dist/django/contrib/sessions/locale \
+	src/kolibri/dist/django/contrib/sites/locale \
+	src/kolibri/dist/django_filters/locale \
+	src/kolibri/dist/mptt/locale \
+	src/kolibri/dist/rest_framework/locale
 	rm -rf \
 	src/kolibri/dist/cext/cp27 \
 	src/kolibri/dist/cext/cp34 \
