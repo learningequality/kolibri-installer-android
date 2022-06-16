@@ -4,6 +4,7 @@ import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
+from android.runnable import run_on_ui_thread
 from android_utils import ask_all_files_access
 from android_utils import get_endless_key_paths
 from android_utils import provision_endless_key_database
@@ -92,22 +93,40 @@ try:
 except FileNotFoundError:
     pass
 
-# we need to initialize Kolibri to allow us to access the app key
-initialize()
 
-# start kolibri server
-logging.info("Starting kolibri server via Android service...")
-start_service("server")
+def start_kolibri():
+    # we need to initialize Kolibri to allow us to access the app key
+    initialize()
 
-# Tie up this thread until the server is running
-wait_for_status(STATUS_RUNNING, timeout=120)
+    # start kolibri server
+    logging.info("Starting kolibri server via Android service...")
+    start_service("server")
 
-_, port, _, _ = _read_pid_file(PID_FILE)
+    # Tie up this thread until the server is running
+    wait_for_status(STATUS_RUNNING, timeout=120)
 
-start_url = "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
-loadUrl(start_url)
+    _, port, _, _ = _read_pid_file(PID_FILE)
 
-start_service("remoteshell")
+    start_url = (
+        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    )
+    loadUrl(start_url)
+
+    start_service("remoteshell")
+
+
+@run_on_ui_thread
+def hook():
+    WelcomeScreenInterface = autoclass("org.endlessos.Key.WelcomeScreenInterface")
+    welcomeScreenInterface = WelcomeScreenInterface()
+    welcomeScreenInterface.test()
+    PythonActivity.mWebView.addJavascriptInterface(welcomeScreenInterface, "EndlessAPI")
+    PythonActivity.mWebView.loadUrl(
+        "file:///android_asset/loadingScreen/index.html#/welcome"
+    )
+
+
+hook()
 
 while True:
     time.sleep(0.05)
