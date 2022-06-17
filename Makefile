@@ -113,6 +113,7 @@ src/kolibri: clean
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
 	patch -d src/ -p1 < patches/0001-server-Set-STATUS_RUNNING-just-once.patch
+	patch -d src/ -p1 < patches/0001-Requeue-RUNNING-jobs-on-startup.patch
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
