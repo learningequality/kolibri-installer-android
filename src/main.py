@@ -36,6 +36,7 @@ REQUIRED_PLUGINS = [
 # These Kolibri plugins will be dynamically enabled if they are available:
 OPTIONAL_PLUGINS = [
     "kolibri_explore_plugin",
+    "kolibri_zim_plugin",
 ]
 
 
