@@ -71,13 +71,20 @@ pipeline {
 
     post {
         failure {
-            // Send email on failures
-            emailext (
-                to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
-                replyTo: 'apps@endlessos.org',
-                subject: '$DEFAULT_SUBJECT',
-                body: '$DEFAULT_CONTENT',
-            )
+            // Send email on failures when this not a PR. Unfortunately,
+            // there's no declarative pipeline step to test for this
+            // besides wrapping in a script block and checking for one
+            // of the ghprb environment variables.
+            script {
+                if (!env.ghprbPullId) {
+                    emailext (
+                        to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
+                        replyTo: 'apps@endlessos.org',
+                        subject: '$DEFAULT_SUBJECT',
+                        body: '$DEFAULT_CONTENT',
+                    )
+                }
+            }
         }
     }
 }
