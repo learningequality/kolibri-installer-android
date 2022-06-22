@@ -4,7 +4,6 @@ import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
-from android.runnable import run_on_ui_thread
 from android_utils import ask_all_files_access
 from android_utils import get_endless_key_paths
 from android_utils import provision_endless_key_database
@@ -41,6 +40,9 @@ OPTIONAL_PLUGINS = [
 ]
 
 
+TO_RUN_IN_MAIN = None
+
+
 def _disable_kolibri_plugin(plugin_name: str) -> bool:
     if plugin_name in plugins_config.ACTIVE_PLUGINS:
         logging.info(f"Disabling plugin {plugin_name}")
@@ -61,16 +63,30 @@ def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:
     return True
 
 
-access_granted = ask_all_files_access()
-if access_granted:
-    endless_key_paths = get_endless_key_paths()
-    provision_endless_key_database(endless_key_paths)
+def load():
+    global TO_RUN_IN_MAIN
+    TO_RUN_IN_MAIN = start_kolibri
+
+
+def load_with_usb():
+    # TODO: Show grant access view
+    def start_kolibri_with_usb():
+        access_granted = ask_all_files_access()
+        if access_granted:
+            endless_key_paths = get_endless_key_paths()
+            provision_endless_key_database(endless_key_paths)
+        start_kolibri()
+
+    global TO_RUN_IN_MAIN
+    TO_RUN_IN_MAIN = start_kolibri_with_usb
+
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 
 FullScreen = autoclass("org.learningequality.FullScreen")
 configureWebview = Runnable(FullScreen.configureWebview)
-configureWebview(PythonActivity.mActivity)
+
+configureWebview(PythonActivity.mActivity, Runnable(load), Runnable(load_with_usb))
 
 loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 
@@ -115,18 +131,8 @@ def start_kolibri():
     start_service("remoteshell")
 
 
-@run_on_ui_thread
-def hook():
-    WelcomeScreenInterface = autoclass("org.endlessos.Key.WelcomeScreenInterface")
-    welcomeScreenInterface = WelcomeScreenInterface()
-    welcomeScreenInterface.test()
-    PythonActivity.mWebView.addJavascriptInterface(welcomeScreenInterface, "EndlessAPI")
-    PythonActivity.mWebView.loadUrl(
-        "file:///android_asset/loadingScreen/index.html#/welcome"
-    )
-
-
-hook()
-
 while True:
+    if callable(TO_RUN_IN_MAIN):
+        TO_RUN_IN_MAIN()
+        TO_RUN_IN_MAIN = False
     time.sleep(0.05)
