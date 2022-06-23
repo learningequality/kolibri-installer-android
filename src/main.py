@@ -40,6 +40,9 @@ OPTIONAL_PLUGINS = [
 ]
 
 
+TO_RUN_IN_MAIN = None
+
+
 def _disable_kolibri_plugin(plugin_name: str) -> bool:
     if plugin_name in plugins_config.ACTIVE_PLUGINS:
         logging.info(f"Disabling plugin {plugin_name}")
@@ -60,16 +63,30 @@ def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:
     return True
 
 
-access_granted = ask_all_files_access()
-if access_granted:
-    endless_key_paths = get_endless_key_paths()
-    provision_endless_key_database(endless_key_paths)
+def load():
+    global TO_RUN_IN_MAIN
+    TO_RUN_IN_MAIN = start_kolibri
+
+
+def load_with_usb():
+    # TODO: Show grant access view
+    def start_kolibri_with_usb():
+        access_granted = ask_all_files_access()
+        if access_granted:
+            endless_key_paths = get_endless_key_paths()
+            provision_endless_key_database(endless_key_paths)
+        start_kolibri()
+
+    global TO_RUN_IN_MAIN
+    TO_RUN_IN_MAIN = start_kolibri_with_usb
+
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 
 FullScreen = autoclass("org.learningequality.FullScreen")
 configureWebview = Runnable(FullScreen.configureWebview)
-configureWebview(PythonActivity.mActivity)
+
+configureWebview(PythonActivity.mActivity, Runnable(load), Runnable(load_with_usb))
 
 loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 
@@ -92,22 +109,30 @@ try:
 except FileNotFoundError:
     pass
 
-# we need to initialize Kolibri to allow us to access the app key
-initialize()
 
-# start kolibri server
-logging.info("Starting kolibri server via Android service...")
-start_service("server")
+def start_kolibri():
+    # we need to initialize Kolibri to allow us to access the app key
+    initialize()
 
-# Tie up this thread until the server is running
-wait_for_status(STATUS_RUNNING, timeout=120)
+    # start kolibri server
+    logging.info("Starting kolibri server via Android service...")
+    start_service("server")
 
-_, port, _, _ = _read_pid_file(PID_FILE)
+    # Tie up this thread until the server is running
+    wait_for_status(STATUS_RUNNING, timeout=120)
 
-start_url = "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
-loadUrl(start_url)
+    _, port, _, _ = _read_pid_file(PID_FILE)
 
-start_service("remoteshell")
+    start_url = (
+        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    )
+    loadUrl(start_url)
+
+    start_service("remoteshell")
+
 
 while True:
+    if callable(TO_RUN_IN_MAIN):
+        TO_RUN_IN_MAIN()
+        TO_RUN_IN_MAIN = False
     time.sleep(0.05)

@@ -22,6 +22,8 @@ class Runnable(PythonJavaClass):
     def __init__(self, func):
         super(Runnable, self).__init__()
         self.func = func
+        self.args = []
+        self.kwargs = {}
 
     def __call__(self, *args, **kwargs):
         self.args = args
@@ -38,4 +40,5 @@ class Runnable(PythonJavaClass):
 
             traceback.print_exc()
 
-        Runnable.__runnables__.remove(self)
+        if self in Runnable.__runnables__:
+            Runnable.__runnables__.remove(self)

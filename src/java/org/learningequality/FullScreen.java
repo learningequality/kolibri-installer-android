@@ -9,7 +9,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.webkit.JavascriptInterface;
 import org.kivy.android.PythonActivity;
+
+import android.util.Log;
+import java.lang.Runnable;
 
 public class FullScreen {
     public PythonActivity mActivity;
@@ -22,15 +26,40 @@ public class FullScreen {
         mChrome = new MyChrome(activity);
     }
 
-    public static void configureWebview(PythonActivity activity) {
+    public static void configureWebview(PythonActivity activity, final Runnable load, final Runnable loadWithUSB) {
         FullScreen fs = new FullScreen(activity);
-        fs.configure();
+        fs.configure(load, loadWithUSB);
     }
 
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
-    public void configure() {
-        mWebView.setWebViewClient(new WebViewClient());
+    public void configure(final Runnable load, final Runnable loadWithUSB) {
+        mWebView.setWebContentsDebuggingEnabled(true);
+        mWebView.setWebViewClient(new WebViewClient() {
+            private boolean mInWelcome = false;
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // TODO: enable the loading when the USB is connected?
+                mWebView.evaluateJavascript("setHasUSB(true)", null);
+
+                if (!mInWelcome && url.contains("loadingScreen/index.html")) {
+                    mWebView.evaluateJavascript("show_welcome()", null);
+                    mInWelcome = true;
+                }
+            }
+        });
+        mWebView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void load() {
+                load.run();
+            }
+            @JavascriptInterface
+            public void loadWithUSB() {
+                loadWithUSB.run();
+            }
+        } , "EndlessAPI");
+
         mWebView.setWebChromeClient(mChrome);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
