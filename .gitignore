@@ -17,5 +17,9 @@ build.log
 tmphome/
 android_root/
 
+# Typical virtualenv directories
+venv/
+.venv/
+
 *.apk
 .env
