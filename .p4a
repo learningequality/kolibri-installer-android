@@ -1,4 +1,3 @@
---window
 --bootstrap "webview"
 --package "org.endlessos.Key"
 --name "Endless Key"
@@ -24,3 +23,5 @@
 --whitelist ./allowlist.txt
 --blacklist ./blocklist.txt
 --add-source src/java/
+--activity-meta-data WindowManagerPreference:FreeformWindowSize=maximize
+--activity-meta-data WindowManagerPreference:FreeformWindowOrientation=landscape
