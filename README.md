@@ -38,6 +38,41 @@ To download a Kolibri WHL file, you can use `make whl=<URL>` from the command li
 
 6. Run `make kolibri.apk.unsigned` to build the apk. Watch for success at the end, or errors, which might indicate missing build dependencies or build errors. If successful, there should be an APK in the `dist/` directory.
 
+## Build on Toolbox
+
+Toolbox allows a mixture of the above build processes by providing a
+development environment inside a container.
+
+1. Install [toolbox](https://containertoolbx.org/)
+
+2. Run `make build_toolbox`.
+
+3. Run `toolbox enter android_kolibri` to enter the container.
+
+4. Install the Python dependencies:
+
+   `pip install -r requirements.txt`
+
+   Optionally you can use a virtualenv for the Python dependencies so
+   that they're not installed in your home directory or in the container
+   storage.
+
+5. Build or download a Kolibri WHL file, and place it in the `whl/` directory.
+
+   To download a Kolibri WHL file, you can use `make whl=<URL>` from the
+   command line. It will download it and put it in the correct
+   directory.
+
+6. By default the APK will be built for most architectures supported by
+   Python for Android. To build for a smaller set of architectures, set
+   the `ARCHES` environment variable. Run `p4a archs` to see the
+   available targets.
+
+6. Run `make kolibri.apk.unsigned` to build the apk. Watch for success
+   at the end, or errors, which might indicate missing build
+   dependencies or build errors. If successful, there should be an APK
+   in the `dist/` directory.
+
 ## Installing the apk
 1. Connect your Android device over USB, with USB Debugging enabled.
 

@@ -3,3 +3,5 @@
 src/kolibri
 dist/android
 README.md
+venv/
+.venv/

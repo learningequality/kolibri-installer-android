@@ -32,7 +32,9 @@ SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
 ADB := adb
 DOCKER := docker
 P4A := p4a
+PODMAN := podman
 PYTHON_FOR_ANDROID := python-for-android
+TOOLBOX := toolbox
 
 # This checks if an environment variable with a specific name
 # exists. If it doesn't, it prints an error message and exits.
@@ -188,6 +190,12 @@ build_docker: Dockerfile
 # TODO Would be better to just specify the file here?
 run_docker: build_docker
 	env DOCKER="$(DOCKER)" ./scripts/rundocker.sh
+
+# Toolbox build
+build_toolbox: Dockerfile-toolbox
+	$(PODMAN) build -t android_kolibri_toolbox -f $< .
+	$(TOOLBOX) rm -f android_kolibri || :
+	$(TOOLBOX) create -c android_kolibri -i android_kolibri_toolbox
 
 install:
 	$(ADB) uninstall org.endlessos.Key || true 2> /dev/null
