@@ -370,3 +370,43 @@ def _android11_ext_storage_workarounds():
 
 def apply_android_workarounds():
     _android11_ext_storage_workarounds()
+
+
+class StartupState:
+    FIRST_TIME = 1
+    USB = 2
+    NETWORK = 3
+    _usb_content_flag = "usb_content_flag"
+
+    @classmethod
+    def get_current_state(cls):
+        """
+        Returns the current app startup state that could be:
+            * FIRST_TIME
+            * USB
+            * NETWORK
+        """
+        home = get_home_folder()
+
+        # if there's no home folder this is the first launch
+        db_path = os.path.join(home, "db.sqlite3")
+        if not os.path.exists(db_path):
+            return cls.FIRST_TIME
+
+        # If the usb content flag file exists in the home, the app has been
+        # started with an Endless Key USB
+        usb_content_flag_file = os.path.join(home, cls._usb_content_flag)
+        if os.path.exists(usb_content_flag_file):
+            return cls.USB
+
+        # in other case, the app is initialized but with content downloaded
+        # using the network
+        return cls.NETWORK
+
+    @classmethod
+    def create_usb_content_flag(cls):
+        home = get_home_folder()
+        usb_content_flag_file = os.path.join(home, cls._usb_content_flag)
+        if not os.path.exists(usb_content_flag_file):
+            f = open(usb_content_flag_file, "w")
+            f.close()

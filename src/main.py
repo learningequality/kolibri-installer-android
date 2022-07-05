@@ -8,6 +8,7 @@ from android_utils import ask_all_files_access
 from android_utils import get_endless_key_paths
 from android_utils import provision_endless_key_database
 from android_utils import start_service
+from android_utils import StartupState
 from jnius import autoclass
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
@@ -69,16 +70,31 @@ def load():
 
 
 def load_with_usb():
-    # TODO: Show grant access view
-    def start_kolibri_with_usb():
-        access_granted = ask_all_files_access()
-        if access_granted:
-            endless_key_paths = get_endless_key_paths()
-            provision_endless_key_database(endless_key_paths)
-        start_kolibri()
-
     global TO_RUN_IN_MAIN
+    # TODO: Show grant access view
     TO_RUN_IN_MAIN = start_kolibri_with_usb
+
+
+def on_loading_ready():
+    global TO_RUN_IN_MAIN
+
+    startup_state = StartupState.get_current_state()
+    if startup_state == StartupState.FIRST_TIME:
+        logging.info("First time")
+        PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
+
+    elif startup_state == StartupState.USB:
+        logging.info("Starting USB mode")
+        access_granted = ask_all_files_access()
+        # Require usb
+        if not access_granted or not get_endless_key_paths():
+            PythonActivity.mWebView.evaluateJavascript("show_endless_key()", None)
+        else:
+            TO_RUN_IN_MAIN = start_kolibri_with_usb
+
+    else:
+        logging.info("Starting network mode")
+        TO_RUN_IN_MAIN = start_kolibri
 
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
@@ -86,7 +102,12 @@ PythonActivity = autoclass("org.kivy.android.PythonActivity")
 FullScreen = autoclass("org.learningequality.FullScreen")
 configureWebview = Runnable(FullScreen.configureWebview)
 
-configureWebview(PythonActivity.mActivity, Runnable(load), Runnable(load_with_usb))
+configureWebview(
+    PythonActivity.mActivity,
+    Runnable(load),
+    Runnable(load_with_usb),
+    Runnable(on_loading_ready),
+)
 
 loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 
@@ -108,6 +129,15 @@ try:
     os.unlink(PID_FILE)
 except FileNotFoundError:
     pass
+
+
+def start_kolibri_with_usb():
+    access_granted = ask_all_files_access()
+    if access_granted:
+        endless_key_paths = get_endless_key_paths()
+        provision_endless_key_database(endless_key_paths)
+        StartupState.create_usb_content_flag()
+    start_kolibri()
 
 
 def start_kolibri():
