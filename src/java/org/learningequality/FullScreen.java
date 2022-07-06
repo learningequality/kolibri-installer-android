@@ -15,6 +15,7 @@ import org.kivy.android.PythonActivity;
 import android.util.Log;
 import java.lang.Runnable;
 
+
 public class FullScreen {
     public PythonActivity mActivity;
     public WebView mWebView;
@@ -26,14 +27,14 @@ public class FullScreen {
         mChrome = new MyChrome(activity);
     }
 
-    public static void configureWebview(PythonActivity activity, final Runnable load, final Runnable loadWithUSB) {
+    public static void configureWebview(PythonActivity activity, final Runnable load, final Runnable loadWithUSB, final Runnable loadingReady) {
         FullScreen fs = new FullScreen(activity);
-        fs.configure(load, loadWithUSB);
+        fs.configure(load, loadWithUSB, loadingReady);
     }
 
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
-    public void configure(final Runnable load, final Runnable loadWithUSB) {
+    public void configure(final Runnable load, final Runnable loadWithUSB, final Runnable loadingReady) {
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
@@ -44,7 +45,7 @@ public class FullScreen {
                 mWebView.evaluateJavascript("setHasUSB(true)", null);
 
                 if (!mInWelcome && url.contains("loadingScreen/index.html")) {
-                    mWebView.evaluateJavascript("show_welcome()", null);
+                    loadingReady.run();
                     mInWelcome = true;
                 }
             }

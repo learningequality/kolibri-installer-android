@@ -5,6 +5,8 @@ import re
 import shutil
 import time
 from datetime import datetime
+from enum import auto
+from enum import Enum
 from pathlib import Path
 
 from android.permissions import check_permission
@@ -37,6 +39,9 @@ Uri = autoclass("android.net.Uri")
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 RELEASE = ANDROID_VERSION.RELEASE
 SDK_INT = ANDROID_VERSION.SDK_INT
+
+
+USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 
 
 # Path.is_relative_to only on python 3.9+.
@@ -370,3 +375,42 @@ def _android11_ext_storage_workarounds():
 
 def apply_android_workarounds():
     _android11_ext_storage_workarounds()
+
+
+class StartupState(Enum):
+    FIRST_TIME = auto()
+    USB_USER = auto()
+    NETWORK_USER = auto()
+
+    @classmethod
+    def get_current_state(cls):
+        """
+        Returns the current app startup state that could be:
+            * FIRST_TIME
+            * USB_USER
+            * NETWORK_USER
+        """
+        home = get_home_folder()
+
+        # if there's no database in the home folder this is the first launch
+        db_path = os.path.join(home, "db.sqlite3")
+        if not os.path.exists(db_path):
+            return cls.FIRST_TIME
+
+        # If the usb content flag file exists in the home, the app has been
+        # started with an Endless Key USB
+        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
+        if os.path.exists(usb_content_flag_file):
+            return cls.USB_USER
+
+        # in other case, the app is initialized but with content downloaded
+        # using the network
+        return cls.NETWORK_USER
+
+    @classmethod
+    def create_usb_content_flag(cls):
+        home = get_home_folder()
+        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
+        if not os.path.exists(usb_content_flag_file):
+            f = open(usb_content_flag_file, "w")
+            f.close()
