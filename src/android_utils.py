@@ -379,20 +379,20 @@ def apply_android_workarounds():
 
 class StartupState(Enum):
     FIRST_TIME = auto()
-    USB = auto()
-    NETWORK = auto()
+    USB_USER = auto()
+    NETWORK_USER = auto()
 
     @classmethod
     def get_current_state(cls):
         """
         Returns the current app startup state that could be:
             * FIRST_TIME
-            * USB
-            * NETWORK
+            * USB_USER
+            * NETWORK_USER
         """
         home = get_home_folder()
 
-        # if there's no home folder this is the first launch
+        # if there's no database in the home folder this is the first launch
         db_path = os.path.join(home, "db.sqlite3")
         if not os.path.exists(db_path):
             return cls.FIRST_TIME
@@ -401,11 +401,11 @@ class StartupState(Enum):
         # started with an Endless Key USB
         usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
         if os.path.exists(usb_content_flag_file):
-            return cls.USB
+            return cls.USB_USER
 
         # in other case, the app is initialized but with content downloaded
         # using the network
-        return cls.NETWORK
+        return cls.NETWORK_USER
 
     @classmethod
     def create_usb_content_flag(cls):

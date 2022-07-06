@@ -83,7 +83,7 @@ def on_loading_ready():
         logging.info("First time")
         PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
 
-    elif startup_state == StartupState.USB:
+    elif startup_state == StartupState.USB_USER:
         logging.info("Starting USB mode")
         access_granted = ask_all_files_access()
         # Require usb
