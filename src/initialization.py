@@ -32,6 +32,7 @@ elif signing_org == "Google Inc.":
 else:
     runmode = "android-" + re.sub(r"[^a-z ]", "", signing_org.lower()).replace(" ", "-")
 os.environ["KOLIBRI_RUN_MODE"] = runmode
+os.environ["KOLIBRI_PROJECT"] = "endless-key-android"
 
 os.environ["TZ"] = get_timezone_name()
 os.environ["LC_ALL"] = "en_US.UTF-8"
