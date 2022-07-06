@@ -5,6 +5,8 @@ import re
 import shutil
 import time
 from datetime import datetime
+from enum import auto
+from enum import Enum
 from pathlib import Path
 
 from android.permissions import check_permission
@@ -375,10 +377,10 @@ def apply_android_workarounds():
     _android11_ext_storage_workarounds()
 
 
-class StartupState:
-    FIRST_TIME = 1
-    USB = 2
-    NETWORK = 3
+class StartupState(Enum):
+    FIRST_TIME = auto()
+    USB = auto()
+    NETWORK = auto()
 
     @classmethod
     def get_current_state(cls):
