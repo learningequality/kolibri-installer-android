@@ -39,6 +39,9 @@ RELEASE = ANDROID_VERSION.RELEASE
 SDK_INT = ANDROID_VERSION.SDK_INT
 
 
+USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
+
+
 # Path.is_relative_to only on python 3.9+.
 if not hasattr(Path, "is_relative_to"):
 
@@ -376,7 +379,6 @@ class StartupState:
     FIRST_TIME = 1
     USB = 2
     NETWORK = 3
-    _usb_content_flag = "usb_content_flag"
 
     @classmethod
     def get_current_state(cls):
@@ -395,7 +397,7 @@ class StartupState:
 
         # If the usb content flag file exists in the home, the app has been
         # started with an Endless Key USB
-        usb_content_flag_file = os.path.join(home, cls._usb_content_flag)
+        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
         if os.path.exists(usb_content_flag_file):
             return cls.USB
 
@@ -406,7 +408,7 @@ class StartupState:
     @classmethod
     def create_usb_content_flag(cls):
         home = get_home_folder()
-        usb_content_flag_file = os.path.join(home, cls._usb_content_flag)
+        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
         if not os.path.exists(usb_content_flag_file):
             f = open(usb_content_flag_file, "w")
             f.close()
