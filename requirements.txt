@@ -1,3 +1,3 @@
 cython
 virtualenv
-git+https://github.com/endlessm/python-for-android@b672ec47db60f66784d2e24a38c3347a265b61a5#egg=python-for-android
+git+https://github.com/endlessm/python-for-android@3dcd0d377bc9eac1b7aabcce233bacd2e912270d#egg=python-for-android
