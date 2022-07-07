@@ -139,7 +139,7 @@ p4a_android_distro: needs-android-dirs
 	$(P4A) create $(ARCH_OPTIONS)
 
 .PHONY: needs-version
-needs-version:
+needs-version: src/kolibri
 	$(eval APK_VERSION ?= $(shell python3 scripts/version.py apk_version))
 	$(eval BUILD_NUMBER ?= $(shell python3 scripts/version.py build_number))
 
