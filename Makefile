@@ -168,7 +168,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle needs-versi
 .PHONY: kolibri.aab
 # Build the signed version of the aab
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.aab: p4a_android_distro src/kolibri needs-version
+kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
