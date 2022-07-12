@@ -24,6 +24,10 @@ sys.path.append(script_dir)
 sys.path.append(os.path.join(script_dir, "kolibri", "dist"))
 sys.path.append(os.path.join(script_dir, "extra-packages"))
 
+from android_whitenoise import monkeypatch_whitenoise  # noqa: E402
+
+monkeypatch_whitenoise()
+
 signing_org = get_signature_key_issuing_organization()
 if signing_org == "Learning Equality":
     runmode = "android-testing"
