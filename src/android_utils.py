@@ -8,7 +8,10 @@ from datetime import datetime
 from enum import auto
 from enum import Enum
 from pathlib import Path
+from queue import Queue
 
+from android.activity import bind
+from android.activity import unbind
 from android.permissions import check_permission
 from android.permissions import Permission
 from android.permissions import request_permissions
@@ -21,6 +24,7 @@ from jnius import jnius
 
 logger = logging.getLogger(__name__)
 
+Activity = autoclass("android.app.Activity")
 AndroidString = autoclass("java.lang.String")
 Context = autoclass("android.content.Context")
 Environment = autoclass("android.os.Environment")
@@ -167,6 +171,54 @@ def provision_endless_key_database(endless_key_paths):
             logger.debug("EK database provisioned.")
         else:
             logger.debug("EK database found in external storage bu user didn't allow.")
+
+
+def choose_directory(activity=None, timeout=None):
+    """Run the file picker to choose a directory"""
+    if activity is None:
+        activity = get_activity()
+    content_resolver = activity.getContentResolver()
+
+    data_queue = Queue(1)
+    OPEN_DIRECTORY_REQUEST_CODE = 0xF11E
+
+    def on_activity_result(request, result, intent):
+        if request != OPEN_DIRECTORY_REQUEST_CODE:
+            return
+
+        if result != Activity.RESULT_OK:
+            if result == Activity.RESULT_CANCELED:
+                logger.info("Open directory request cancelled")
+            else:
+                logger.info("Open directory request result %d", result)
+            data_queue.put(None, timeout=timeout)
+            return
+
+        if intent is None:
+            logger.warning("Open directory result contains no data")
+            data_queue.put(None, timeout=timeout)
+            return
+
+        uri = intent.getData()
+        uri_str = uri.toString()
+        logger.info("Open directory request returned URI %s", uri_str)
+
+        logger.debug("Persisting read permissions for %s", uri_str)
+        flags = intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION
+        content_resolver.takePersistableUriPermission(uri, flags)
+
+        data_queue.put(uri_str, timeout=timeout)
+
+    bind(on_activity_result=on_activity_result)
+    try:
+        intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        activity.startActivityForResult(
+            intent,
+            OPEN_DIRECTORY_REQUEST_CODE,
+        )
+        return data_queue.get(timeout=timeout)
+    finally:
+        unbind(on_activity_result=on_activity_result)
 
 
 def prompt_all_files_access():
