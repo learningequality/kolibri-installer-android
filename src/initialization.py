@@ -55,6 +55,7 @@ if os.path.exists(AUTOPROVISION_FILE):
 os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
 os.environ["KOLIBRI_APPS_BUNDLE_PATH"] = os.path.join(script_dir, "apps-bundle", "apps")
+os.environ["KOLIBRI_CONTENT_COLLECTIONS_PATH"] = os.path.join(script_dir, "collections")
 
 Secure = autoclass("android.provider.Settings$Secure")
 
