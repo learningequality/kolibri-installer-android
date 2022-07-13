@@ -134,6 +134,19 @@ clean-apps-bundle:
 src/apps-bundle: clean-apps-bundle apps-bundle.zip
 	unzip -qo apps-bundle.zip -d src/apps-bundle
 
+.PHONY: collections.zip
+collections.zip:
+	wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
+	mv main.zip collections.zip
+
+clean-collections:
+	- rm -rf src/collections
+
+src/collections: clean-collections collections.zip
+	unzip -qo collections.zip
+	mv endless-key-collections-main/json/ src/collections
+	rm -rf endless-key-collections-main
+
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
 	$(P4A) create $(ARCH_OPTIONS)
@@ -146,7 +159,7 @@ needs-version: src/kolibri
 .PHONY: kolibri.apk
 # Build the signed version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle needs-version
+kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
@@ -159,7 +172,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle needs-version
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle needs-version
+kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
@@ -168,7 +181,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle needs-versi
 .PHONY: kolibri.aab
 # Build the signed version of the aab
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle needs-version
+kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
