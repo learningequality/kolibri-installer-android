@@ -138,7 +138,6 @@ def start_kolibri_with_usb():
     if key_uris:
         provision_endless_key_database(key_uris)
         set_endless_key_uris(key_uris)
-        StartupState.create_usb_content_flag()
     start_kolibri()
 
 

@@ -705,20 +705,11 @@ class StartupState(Enum):
         if not os.path.exists(db_path):
             return cls.FIRST_TIME
 
-        # If the usb content flag file exists in the home, the app has been
-        # started with an Endless Key USB
-        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
-        if os.path.exists(usb_content_flag_file):
+        # If there are Endless Key URIs in the preferences, the app has
+        # been started with an Endless Key USB.
+        if get_endless_key_uris():
             return cls.USB_USER
 
         # in other case, the app is initialized but with content downloaded
         # using the network
         return cls.NETWORK_USER
-
-    @classmethod
-    def create_usb_content_flag(cls):
-        home = get_home_folder()
-        usb_content_flag_file = os.path.join(home, USB_CONTENT_FLAG_FILENAME)
-        if not os.path.exists(usb_content_flag_file):
-            f = open(usb_content_flag_file, "w")
-            f.close()
