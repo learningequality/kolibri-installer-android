@@ -4,6 +4,8 @@ import re
 import stat
 from wsgiref.headers import Headers
 
+from android_utils import get_activity
+from android_utils import open_file
 from django.contrib.staticfiles import finders
 from kolibri.utils import kolibri_whitenoise
 from kolibri.utils.kolibri_whitenoise import compressed_file_extensions
@@ -11,10 +13,43 @@ from kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
 from kolibri.utils.kolibri_whitenoise import FileFinder
 from kolibri.utils.kolibri_whitenoise import NOT_FOUND
 from whitenoise import WhiteNoise
+from whitenoise.httpstatus_backport import HTTPStatus
 from whitenoise.responders import MissingFileError
+from whitenoise.responders import NOT_ALLOWED_RESPONSE
+from whitenoise.responders import Response
 from whitenoise.string_utils import decode_path_info
 
 logger = logging.getLogger(__name__)
+
+
+class AndroidEndRangeStaticFile(EndRangeStaticFile):
+    def __init__(self, path, headers, context, content_resolver, **kwargs):
+        super().__init__(path, headers, **kwargs)
+        self.context = context
+        self.content_resolver = content_resolver
+
+    def get_response(self, method, request_headers):
+        if method not in ("GET", "HEAD"):
+            return NOT_ALLOWED_RESPONSE
+        if self.is_not_modified(request_headers):
+            return self.not_modified_response
+        path, headers = self.get_path_and_headers(request_headers)
+        if method != "HEAD":
+            file_handle = open_file(
+                path, "rb", context=self.context, content_resolver=self.content_resolver
+            )
+        else:
+            file_handle = None
+        range_header = request_headers.get("HTTP_RANGE")
+        if range_header:
+            try:
+                return self.get_range_response(range_header, headers, file_handle)
+            except ValueError:
+                # If we can't interpret the Range request for any reason then
+                # just ignore it and return the standard response (this
+                # behaviour is allowed by the spec)
+                pass
+        return Response(HTTPStatus.OK, headers, file_handle)
 
 
 class DynamicWhiteNoise(WhiteNoise):
@@ -34,6 +69,8 @@ class DynamicWhiteNoise(WhiteNoise):
         }
         kwargs.update(whitenoise_settings)
         super(DynamicWhiteNoise, self).__init__(application, **kwargs)
+        self.context = get_activity()
+        self.content_resolver = self.context.getContentResolver()
         self.dynamic_finder = FileFinder(dynamic_locations or [])
         # Generate a regex to check if a path matches one of our dynamic
         # location prefixes
@@ -109,9 +146,11 @@ class DynamicWhiteNoise(WhiteNoise):
             headers["Access-Control-Allow-Origin"] = "*"
         if self.add_headers_function:
             self.add_headers_function(headers, path, url)
-        return EndRangeStaticFile(
+        return AndroidEndRangeStaticFile(
             path,
             headers.items(),
+            self.context,
+            self.content_resolver,
             stat_cache=stat_cache,
             encodings={"gzip": path + ".gz", "br": path + ".br"},
         )
