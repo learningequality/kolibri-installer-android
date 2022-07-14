@@ -114,6 +114,13 @@ def get_activity():
         return PythonActivity.mActivity
 
 
+def get_preferences():
+    activity = get_activity()
+    return activity.getSharedPreferences(
+        activity.getPackageName(), Activity.MODE_PRIVATE
+    )
+
+
 def is_app_installed(app_id):
 
     manager = get_activity().getPackageManager()
@@ -132,39 +139,65 @@ def get_home_folder():
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
-def get_endless_key_paths():
-    def _get_directory_path(volume):
-        if SDK_INT < 30:
-            uuid = volume.getUuid()
-            if uuid is None:
-                return None
-            return os.path.join("/storage", uuid)
-        else:
-            directory_file = volume.getDirectory()
-            if directory_file is None:
-                return None
-            return directory_file.toString()
+def get_endless_key_uris():
+    preferences = get_preferences()
+    content_uri = preferences.getString("key_content_uri", None)
+    db_uri = preferences.getString("key_db_uri", None)
+    logger.debug("Stored Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
 
-    storageManager = get_activity().getSystemService(Context.STORAGE_SERVICE)
-    volumesList = storageManager.getStorageVolumes()
-    for i in range(volumesList.size()):
-        volume = volumesList.get(i)
-        state = volume.getState()
-        is_removable = volume.isRemovable()
-        directory_path = _get_directory_path(volume)
-        logger.debug(
-            f"Found volume UUID: {volume.getUuid()} state: {state} "
-            f" is removable: {is_removable} mount path: {directory_path}"
-        )
-        if is_removable and state == "mounted" and directory_path is not None:
-            kolibri_data_path = os.path.join(directory_path, "KOLIBRI_DATA")
-            content_path = os.path.join(kolibri_data_path, "content")
-            db_path = os.path.join(
-                kolibri_data_path, "preseeded_kolibri_home", "db.sqlite3"
-            )
-            if os.path.exists(content_path) and os.path.exists(db_path):
-                return {"content_path": content_path, "db_path": db_path}
+    if content_uri and db_uri:
+        return {"content": content_uri, "db": db_uri}
+
     return None
+
+
+def choose_endless_key_uris():
+    activity = get_activity()
+    data_uri = choose_directory(activity)
+
+    content_uri = db_uri = None
+    if data_uri is not None:
+        tree_uri = Uri.parse(data_uri)
+        tree_doc_id = DocumentsContract.getTreeDocumentId(tree_uri)
+        tree_doc_uri = DocumentsContract.buildDocumentUriUsingTree(
+            tree_uri, tree_doc_id
+        )
+
+        content_resolver = activity.getContentResolver()
+        tree_files = document_tree_list_files(tree_doc_uri, content_resolver)
+
+        content = tree_files.get("content")
+        if content and content["mime_type"] == Document.MIME_TYPE_DIR:
+            content_uri = content["uri"].toString()
+
+        preseeded_home = tree_files.get("preseeded_kolibri_home")
+        if preseeded_home and preseeded_home["mime_type"] == Document.MIME_TYPE_DIR:
+            preseeded_home_files = document_tree_list_files(
+                preseeded_home["uri"], content_resolver
+            )
+            db = preseeded_home_files.get("db.sqlite3")
+            if db and ["mime_type"] != Document.MIME_TYPE_DIR:
+                db_uri = db["uri"].toString()
+
+    if content_uri and db_uri:
+        logger.info("Found Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
+        return {"content": content_uri, "db": db_uri}
+
+    return None
+
+
+def set_endless_key_uris(endless_key_uris):
+    if endless_key_uris is None:
+        return
+
+    content_uri = endless_key_uris["content"]
+    db_uri = endless_key_uris["db"]
+    if content_uri and db_uri:
+        logger.info("Setting Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
+        editor = get_preferences().edit()
+        editor.putString("key_content_uri", content_uri)
+        editor.putString("key_db_uri", db_uri)
+        editor.commit()
 
 
 def is_document_uri(path, context=None):
@@ -377,19 +410,23 @@ def document_tree_list_files(tree_doc_uri, content_resolver=None):
     return listing
 
 
-def provision_endless_key_database(endless_key_paths):
-    if endless_key_paths is not None:
+def provision_endless_key_database(endless_key_uris):
+    if endless_key_uris is not None:
         home_folder = get_home_folder()
-        if os.path.exists(os.path.join(home_folder, "db.sqlite3")):
+        dst_path = os.path.join(home_folder, "db.sqlite3")
+        if os.path.exists(dst_path):
             logger.debug("EK database already exists, skipping.")
             return
         if not os.path.exists(home_folder):
             os.mkdir(home_folder)
-        if has_all_files_access():
-            shutil.copy(endless_key_paths["db_path"], home_folder)
-            logger.debug("EK database provisioned.")
-        else:
-            logger.debug("EK database found in external storage bu user didn't allow.")
+
+        src_uri = endless_key_uris["db"]
+        with open_document(src_uri, "rb") as src:
+            with open(dst_path, "wb") as dst:
+                # The file metadata on the database is irrelevant, so we
+                # only need to copy the content.
+                shutil.copyfileobj(src, dst)
+        logger.debug("EK database provisioned.")
 
 
 def choose_directory(activity=None, timeout=None):

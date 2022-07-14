@@ -4,9 +4,10 @@ import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
-from android_utils import ask_all_files_access
-from android_utils import get_endless_key_paths
+from android_utils import choose_endless_key_uris
+from android_utils import get_endless_key_uris
 from android_utils import provision_endless_key_database
+from android_utils import set_endless_key_uris
 from android_utils import start_service
 from android_utils import StartupState
 from jnius import autoclass
@@ -85,9 +86,8 @@ def on_loading_ready():
 
     elif startup_state == StartupState.USB_USER:
         logging.info("Starting USB mode")
-        access_granted = ask_all_files_access()
         # Require usb
-        if not access_granted or not get_endless_key_paths():
+        if not get_endless_key_uris():
             PythonActivity.mWebView.evaluateJavascript("show_endless_key()", None)
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
@@ -132,10 +132,12 @@ except FileNotFoundError:
 
 
 def start_kolibri_with_usb():
-    access_granted = ask_all_files_access()
-    if access_granted:
-        endless_key_paths = get_endless_key_paths()
-        provision_endless_key_database(endless_key_paths)
+    key_uris = get_endless_key_uris()
+    if not key_uris:
+        key_uris = choose_endless_key_uris()
+    if key_uris:
+        provision_endless_key_database(key_uris)
+        set_endless_key_uris(key_uris)
         StartupState.create_usb_content_flag()
     start_kolibri()
 
