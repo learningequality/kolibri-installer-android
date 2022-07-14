@@ -1,14 +1,20 @@
+import errno
 import json
 import logging
 import os
 import re
 import shutil
+import stat
+import sys
 import time
+from contextlib import closing
 from datetime import datetime
 from enum import auto
 from enum import Enum
+from functools import partial
 from pathlib import Path
 from queue import Queue
+from urllib.parse import urlparse
 
 from android.activity import bind
 from android.activity import unbind
@@ -19,6 +25,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
 from jnius import cast
+from jnius import JavaException
 from jnius import jnius
 
 
@@ -27,6 +34,8 @@ logger = logging.getLogger(__name__)
 Activity = autoclass("android.app.Activity")
 AndroidString = autoclass("java.lang.String")
 Context = autoclass("android.content.Context")
+Document = autoclass("android.provider.DocumentsContract$Document")
+DocumentsContract = autoclass("android.provider.DocumentsContract")
 Environment = autoclass("android.os.Environment")
 File = autoclass("java.io.File")
 FileProvider = autoclass("android.support.v4.content.FileProvider")
@@ -156,6 +165,216 @@ def get_endless_key_paths():
             if os.path.exists(content_path) and os.path.exists(db_path):
                 return {"content_path": content_path, "db_path": db_path}
     return None
+
+
+def is_document_uri(path, context=None):
+    if not urlparse(path).scheme:
+        return False
+
+    uri = Uri.parse(path)
+    if context is None:
+        context = get_activity()
+    return DocumentsContract.isDocumentUri(context, uri)
+
+
+def document_opener(path, flags, content_resolver=None):
+    """File opener function for use with DocumentsContract"""
+    # Convert from open flags to Java File modes.
+    #
+    # https://developer.android.com/reference/android/os/ParcelFileDescriptor#parseMode(java.lang.String)
+    logger.debug("Requested opening %s with flags %s", path, bin(flags))
+    if flags & os.O_RDWR:
+        mode = "rw"
+    elif flags & os.O_WRONLY:
+        mode = "w"
+    else:
+        mode = "r"
+
+    if flags & os.O_APPEND:
+        mode += "a"
+    if flags & os.O_TRUNC:
+        mode += "t"
+
+    # Get the file descriptor for the document. Note that neither the
+    # AssetFileDescriptor nor the ParcelFileDescriptor need to be closed
+    # since the raw file descriptor is detached.
+    if content_resolver is None:
+        content_resolver = get_activity().getContentResolver()
+    uri = Uri.parse(path)
+    afd = content_resolver.openAssetFileDescriptor(uri, mode)
+    pfd = afd.getParcelFileDescriptor()
+    return pfd.detachFd()
+
+
+def open_document(uri, mode="r", **kwargs):
+    """open wrapper using DocumentsContract opener"""
+    kwargs["opener"] = document_opener
+    return open(uri, mode=mode, **kwargs)
+
+
+def open_file(path, mode="r", context=None, content_resolver=None, **kwargs):
+    if context is None:
+        context = get_activity()
+    if content_resolver is None:
+        content_resolver = context.getContentResolver()
+    if is_document_uri(path, context):
+        kwargs["opener"] = partial(
+            document_opener,
+            content_resolver=content_resolver,
+        )
+    return open(path, mode=mode, **kwargs)
+
+
+def stat_document(uri, content_resolver=None):
+    if content_resolver is None:
+        content_resolver = get_activity().getContentResolver()
+
+    # Like with document_exists(), assume that
+    # java.lang.IllegalArgumentException means the file doesn't exist.
+    columns = (
+        Document.COLUMN_DOCUMENT_ID,
+        Document.COLUMN_SIZE,
+        Document.COLUMN_LAST_MODIFIED,
+    )
+    try:
+        with closing(content_resolver.query(uri, columns, None, None)) as cursor:
+            if not cursor.moveToFirst():
+                # Emulate ENOENT from os.stat on missing file.
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), uri)
+
+            doc_id = cursor.getString(0)
+            size = cursor.getLong(1)
+            last_modified = cursor.getLong(2)
+    except JavaException as err:
+        if err.classname == "java.lang.IllegalArgumentException":
+            # Emulate ENOENT from os.stat on missing file.
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), uri
+            ) from err
+        raise
+
+    # Treat this as a regular, non-executable file.
+    mode = 0o0644 | stat.S_IFREG
+
+    # Make up a unique inode number just in case the caller is trying to
+    # make a device+inode set. Since the document ID is unique, convert
+    # it to an integer.
+    inode = int.from_bytes(doc_id.encode("utf-8"), sys.byteorder)
+
+    # COLUMN_LAST_MODIFIED is in milliseconds while the stat timestamps
+    # are in seconds.
+    mtime = int(last_modified / 1000)
+
+    # Fill in a stat_result as well as possible. See
+    # https://docs.python.org/3/library/os.html#os.stat_result for the
+    # order of the tuple entries.
+    return os.stat_result(
+        (
+            mode,  # st_mode
+            inode,  # st_ino
+            0,  # st_dev
+            1,  # st_nlink
+            0,  # st_uid
+            0,  # st_gid
+            size,  # st_size
+            mtime,  # st_atime
+            mtime,  # st_mtime
+            mtime,  # st_ctime
+        )
+    )
+
+
+def stat_file(path, context=None, content_resolver=None):
+    if context is None:
+        context = get_activity()
+    if content_resolver is None:
+        content_resolver = context.getContentResolver()
+    if is_document_uri(path, context):
+        return stat_document(Uri.parse(path), content_resolver)
+    return os.stat(path)
+
+
+def document_exists(uri, content_resolver=None):
+    if content_resolver is None:
+        content_resolver = get_activity().getContentResolver()
+
+    # It seems that if you query for a non-existent document, an
+    # IllegalArgumentException will be thrown rather than returning
+    # empty results. Since you can't tell if that's a rethrown
+    # FileNotFoundException without scraping the message, just assume
+    # that's what IllegalArgumentException means.
+    #
+    # DocumentFile.exists() ignores any exception, so this isn't
+    # unfounded.
+    columns = (Document.COLUMN_DOCUMENT_ID,)
+    try:
+        with closing(content_resolver.query(uri, columns, None, None)) as cursor:
+            return cursor.getCount() > 0
+    except JavaException as err:
+        if err.classname == "java.lang.IllegalArgumentException":
+            return False
+        raise
+
+
+def document_tree_join(tree_doc_uri, path, content_resolver=None):
+    if os.path.isabs(path):
+        raise ValueError("path must be relative")
+
+    if content_resolver is None:
+        content_resolver = get_activity().getContentResolver()
+
+    # This is almost certainly wrong since the document ID is supposed
+    # to be an opaque string used by the DocumentsProvider. However, the
+    # document ID *is* the directory path, so just join the desired path
+    # to it.
+    tree_doc_id = DocumentsContract.getDocumentId(tree_doc_uri)
+    path_id = os.path.join(tree_doc_id, path)
+    logger.debug(
+        "Resolved document tree ID %s path %s ID to %s", tree_doc_id, path, path_id
+    )
+
+    # Now convert the path document ID to a document URI.
+    path_uri = DocumentsContract.buildDocumentUriUsingTree(tree_doc_uri, path_id)
+    logger.debug(
+        "Resolved path %s in document tree %s to URI %s",
+        path,
+        tree_doc_uri.toString(),
+        path_uri.toString(),
+    )
+    return path_uri
+
+
+def document_tree_list_files(tree_doc_uri, content_resolver=None):
+    if content_resolver is None:
+        content_resolver = get_activity().getContentResolver()
+
+    tree_doc_id = DocumentsContract.getDocumentId(tree_doc_uri)
+    children_uri = DocumentsContract.buildChildDocumentsUriUsingTree(
+        tree_doc_uri, tree_doc_id
+    )
+
+    columns = (
+        Document.COLUMN_DISPLAY_NAME,
+        Document.COLUMN_DOCUMENT_ID,
+        Document.COLUMN_LAST_MODIFIED,
+        Document.COLUMN_MIME_TYPE,
+        Document.COLUMN_SIZE,
+    )
+    listing = {}
+    with closing(content_resolver.query(children_uri, columns, None, None)) as cursor:
+        while cursor.moveToNext():
+            doc_id = cursor.getString(1)
+            doc_uri = DocumentsContract.buildDocumentUriUsingTree(tree_doc_uri, doc_id)
+
+            listing[cursor.getString(0)] = {
+                "id": doc_id,
+                "uri": doc_uri,
+                "last_modified": cursor.getLong(2),
+                "mime_type": cursor.getString(3),
+                "size": cursor.getLong(4),
+            }
+
+    return listing
 
 
 def provision_endless_key_database(endless_key_paths):
