@@ -6,9 +6,7 @@ import re
 import shutil
 import stat
 import sys
-import time
 from contextlib import closing
-from datetime import datetime
 from enum import auto
 from enum import Enum
 from functools import partial
@@ -18,9 +16,6 @@ from urllib.parse import urlparse
 
 from android.activity import bind
 from android.activity import unbind
-from android.permissions import check_permission
-from android.permissions import Permission
-from android.permissions import request_permissions
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
@@ -475,39 +470,6 @@ def choose_directory(activity=None, timeout=None):
         return data_queue.get(timeout=timeout)
     finally:
         unbind(on_activity_result=on_activity_result)
-
-
-def prompt_all_files_access():
-    if SDK_INT < 30:
-        request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
-    else:
-        askIntent = Intent(
-            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-            Uri.parse("package:org.endlessos.Key"),
-        )
-        get_activity().startActivity(askIntent)
-
-
-def has_all_files_access():
-    if SDK_INT < 30:
-        return check_permission("android.permission.WRITE_EXTERNAL_STORAGE")
-    else:
-        return Environment.isExternalStorageManager()
-
-
-def ask_all_files_access():
-    timeout = False
-    if not has_all_files_access():
-        prompt_all_files_access()
-    start_time = datetime.now()
-    while not has_all_files_access() and not timeout:
-        time.sleep(0.5)
-        delta_time = datetime.now() - start_time
-        # FIXME: handle user denying access to external storage
-        # from the UI. For now just give up after 2 minutes.
-        timeout = delta_time.total_seconds() > 120
-
-    return not timeout
 
 
 def send_whatsapp_message(msg):
