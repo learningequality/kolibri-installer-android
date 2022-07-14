@@ -4,9 +4,15 @@ import re
 import stat
 from wsgiref.headers import Headers
 
+from android_utils import document_exists
+from android_utils import document_tree_join
 from android_utils import get_activity
+from android_utils import is_document_uri
 from android_utils import open_file
+from android_utils import stat_file
 from django.contrib.staticfiles import finders
+from django.utils._os import safe_join
+from jnius import autoclass
 from kolibri.utils import kolibri_whitenoise
 from kolibri.utils.kolibri_whitenoise import compressed_file_extensions
 from kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
@@ -20,6 +26,44 @@ from whitenoise.responders import Response
 from whitenoise.string_utils import decode_path_info
 
 logger = logging.getLogger(__name__)
+
+Uri = autoclass("android.net.Uri")
+
+
+class AndroidFileFinder(FileFinder):
+    def __init__(self, locations, context, content_resolver):
+        super().__init__(locations)
+        self.context = context
+        self.content_resolver = content_resolver
+
+        # Create a set of location roots that are DocumentsProvider URIs
+        # to avoid calling isDocumentUri() repeatedly.
+        self.document_roots = set()
+        for _, root in self.locations:
+            if is_document_uri(root, self.context):
+                self.document_roots.add(root)
+
+    def find_location(self, root, path, prefix=None):
+        """
+        Finds a requested static file in a location, returning the found
+        absolute path (or ``None`` if no match).
+        Vendored from Django to handle being passed a URL path instead of a file path.
+        """
+        if prefix:
+            prefix = prefix + "/"
+            if not path.startswith(prefix):
+                return None
+            path = path[len(prefix) :]
+
+        logger.info("Finding path %s in root %s", path, root)
+        if root in self.document_roots:
+            path_uri = document_tree_join(Uri.parse(root), path)
+            if document_exists(path_uri, self.content_resolver):
+                return path_uri.toString()
+        else:
+            path = safe_join(root, path)
+            if os.path.exists(path):
+                return path
 
 
 class AndroidEndRangeStaticFile(EndRangeStaticFile):
@@ -71,7 +115,9 @@ class DynamicWhiteNoise(WhiteNoise):
         super(DynamicWhiteNoise, self).__init__(application, **kwargs)
         self.context = get_activity()
         self.content_resolver = self.context.getContentResolver()
-        self.dynamic_finder = FileFinder(dynamic_locations or [])
+        self.dynamic_finder = AndroidFileFinder(
+            dynamic_locations or [], self.context, self.content_resolver
+        )
         # Generate a regex to check if a path matches one of our dynamic
         # location prefixes
         self.dynamic_check = (
@@ -98,14 +144,16 @@ class DynamicWhiteNoise(WhiteNoise):
     def find_and_cache_dynamic_file(self, url):
         path = self.get_dynamic_path(url)
         if path:
-            file_stat = os.stat(path)
+            file_stat = stat_file(path, self.context, self.content_resolver)
             # Only try to do matches for regular files.
             if stat.S_ISREG(file_stat.st_mode):
-                stat_cache = {path: os.stat(path)}
+                stat_cache = {path: file_stat}
                 for ext in compressed_file_extensions:
                     try:
                         comp_path = "{}.{}".format(path, ext)
-                        stat_cache[comp_path] = os.stat(comp_path)
+                        stat_cache[comp_path] = stat_file(
+                            comp_path, self.context, self.content_resolver
+                        )
                     except (IOError, OSError):
                         pass
                 self.add_file_to_dictionary(url, path, stat_cache=stat_cache)
