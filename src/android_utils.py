@@ -424,6 +424,65 @@ def provision_endless_key_database(endless_key_uris):
         logger.debug("EK database provisioned.")
 
 
+def create_open_kolibri_data_intent(context):
+    """Create an ACTION_OPEN_DOCUMENT_TREE using KOLIBRI_DATA URI"""
+    storage_manager = context.getSystemService(Context.STORAGE_SERVICE)
+    for volume in storage_manager.getStorageVolumes():
+        if volume is None:
+            continue
+        state = volume.getState()
+        is_removable = volume.isRemovable()
+        uuid = volume.getUuid()
+        directory = volume.getDirectory()
+        path = directory.toString() if directory else None
+        logger.debug(
+            "Found volume UUID=%s, state=%s, removable=%s, mount=%s",
+            uuid,
+            state,
+            is_removable,
+            path,
+        )
+
+        if not is_removable or state != "mounted":
+            continue
+
+        # Create an ACTION_OPEN_DOCUMENT_TREE intent with the URI of the
+        # volume root as the EXTRA_INITIAL_URI.
+        intent = volume.createOpenDocumentTreeIntent()
+
+        # Extract the initial URI from the intent and then adjust it so
+        # it includes the expected KOLIBRI_DATA path. If that path
+        # doesn't exist, then the file picker will use the default
+        # internal storage root.
+        initial_uri = cast(
+            "android.net.Uri",
+            intent.getParcelableExtra(DocumentsContract.EXTRA_INITIAL_URI),
+        )
+        logger.debug(
+            "Volume %s OPEN_DOCUMENT_TREE initial URI: %s", uuid, initial_uri.toString()
+        )
+        root_id = DocumentsContract.getRootId(initial_uri)
+        kolibri_data_id = f"{root_id}:KOLIBRI_DATA"
+        kolibri_data_uri = DocumentsContract.buildDocumentUri(
+            initial_uri.getAuthority(), kolibri_data_id
+        )
+        logger.debug(
+            "Volume %s OPEN_DOCUMENT_TREE KOLIBRI_DATA URI: %s",
+            uuid,
+            kolibri_data_uri.toString(),
+        )
+        intent.putExtra(
+            DocumentsContract.EXTRA_INITIAL_URI,
+            cast("android.os.Parcelable", kolibri_data_uri),
+        )
+
+        return intent
+
+    # No removable volume found, return the default OPEN_DOCUMENT_TREE
+    # intent.
+    return Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+
+
 def choose_directory(activity=None, timeout=None):
     """Run the file picker to choose a directory"""
     if activity is None:
@@ -460,9 +519,14 @@ def choose_directory(activity=None, timeout=None):
 
         data_queue.put(uri_str, timeout=timeout)
 
+    intent = create_open_kolibri_data_intent(activity)
+    logger.info("Open directory intent: %s", intent.toString())
+    extras = intent.getExtras()
+    if extras:
+        logger.info("Open directory intent extras: %s", extras.toString())
+
     bind(on_activity_result=on_activity_result)
     try:
-        intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         activity.startActivityForResult(
             intent,
             OPEN_DIRECTORY_REQUEST_CODE,
