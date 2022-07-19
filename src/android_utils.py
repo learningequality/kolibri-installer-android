@@ -150,37 +150,53 @@ def get_endless_key_uris():
 
 def choose_endless_key_uris():
     activity = get_activity()
-    data_uri = choose_directory(activity)
+    data_uri = choose_directory(activity, msg="Select the KOLIBRI_DATA folder")
 
-    content_uri = db_uri = None
-    if data_uri is not None:
-        tree_uri = Uri.parse(data_uri)
-        tree_doc_id = DocumentsContract.getTreeDocumentId(tree_uri)
-        tree_doc_uri = DocumentsContract.buildDocumentUriUsingTree(
-            tree_uri, tree_doc_id
+    if data_uri is None:
+        logger.info("User cancelled Endless Key selection")
+        return None
+
+    tree_uri = Uri.parse(data_uri)
+    tree_doc_id = DocumentsContract.getTreeDocumentId(tree_uri)
+    tree_doc_uri = DocumentsContract.buildDocumentUriUsingTree(tree_uri, tree_doc_id)
+
+    content_resolver = activity.getContentResolver()
+    tree_files = document_tree_list_files(tree_doc_uri, content_resolver)
+
+    content = tree_files.get("content")
+    if not content or content["mime_type"] != Document.MIME_TYPE_DIR:
+        show_toast(
+            activity,
+            "The selected folder does not contain a content folder",
+            Toast.LENGTH_SHORT,
         )
+        return None
+    content_uri = content["uri"].toString()
 
-        content_resolver = activity.getContentResolver()
-        tree_files = document_tree_list_files(tree_doc_uri, content_resolver)
+    preseeded_home = tree_files.get("preseeded_kolibri_home")
+    if not preseeded_home or preseeded_home["mime_type"] != Document.MIME_TYPE_DIR:
+        show_toast(
+            activity,
+            "The selected folder does not contain a preseeded_kolibri_home folder",
+            Toast.LENGTH_SHORT,
+        )
+        return None
+    preseeded_home_files = document_tree_list_files(
+        preseeded_home["uri"], content_resolver
+    )
 
-        content = tree_files.get("content")
-        if content and content["mime_type"] == Document.MIME_TYPE_DIR:
-            content_uri = content["uri"].toString()
+    db = preseeded_home_files.get("db.sqlite3")
+    if not db or ["mime_type"] == Document.MIME_TYPE_DIR:
+        show_toast(
+            activity,
+            "The selected folder does not contain a db.sqlite3 file in the preseeded_kolibri_home folder",
+            Toast.LENGTH_SHORT,
+        )
+        return None
+    db_uri = db["uri"].toString()
 
-        preseeded_home = tree_files.get("preseeded_kolibri_home")
-        if preseeded_home and preseeded_home["mime_type"] == Document.MIME_TYPE_DIR:
-            preseeded_home_files = document_tree_list_files(
-                preseeded_home["uri"], content_resolver
-            )
-            db = preseeded_home_files.get("db.sqlite3")
-            if db and ["mime_type"] != Document.MIME_TYPE_DIR:
-                db_uri = db["uri"].toString()
-
-    if content_uri and db_uri:
-        logger.info("Found Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
-        return {"content": content_uri, "db": db_uri}
-
-    return None
+    logger.info("Found Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
+    return {"content": content_uri, "db": db_uri}
 
 
 def set_endless_key_uris(endless_key_uris):
@@ -485,7 +501,7 @@ def create_open_kolibri_data_intent(context):
     return Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
 
 
-def choose_directory(activity=None, timeout=None):
+def choose_directory(activity=None, msg=None, timeout=None):
     """Run the file picker to choose a directory"""
     if activity is None:
         activity = get_activity()
@@ -533,6 +549,8 @@ def choose_directory(activity=None, timeout=None):
             intent,
             OPEN_DIRECTORY_REQUEST_CODE,
         )
+        if msg:
+            show_toast(activity, msg, Toast.LENGTH_LONG)
         return data_queue.get(timeout=timeout)
     finally:
         unbind(on_activity_result=on_activity_result)
