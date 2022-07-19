@@ -22,6 +22,7 @@ from jnius import autoclass
 from jnius import cast
 from jnius import JavaException
 from jnius import jnius
+from runnable import Runnable
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 Settings = autoclass("android.provider.Settings")
 Timezone = autoclass("java.util.TimeZone")
+Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
@@ -534,6 +536,17 @@ def choose_directory(activity=None, timeout=None):
         return data_queue.get(timeout=timeout)
     finally:
         unbind(on_activity_result=on_activity_result)
+
+
+def show_toast(context, msg, duration):
+    """Helper to create and show a Toast message"""
+
+    def func():
+        toast = Toast.makeText(context, AndroidString(msg), duration)
+        toast.show()
+
+    runnable = Runnable(func)
+    runnable()
 
 
 def send_whatsapp_message(msg):
