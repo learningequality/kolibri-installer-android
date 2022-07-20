@@ -5,7 +5,7 @@ import sys
 
 from android_utils import apply_android_workarounds
 from android_utils import get_activity
-from android_utils import get_endless_key_paths
+from android_utils import get_endless_key_uris
 from android_utils import get_home_folder
 from android_utils import get_signature_key_issuing_organization
 from android_utils import get_timezone_name
@@ -24,6 +24,11 @@ sys.path.append(script_dir)
 sys.path.append(os.path.join(script_dir, "kolibri", "dist"))
 sys.path.append(os.path.join(script_dir, "extra-packages"))
 
+from android_whitenoise import DynamicWhiteNoise  # noqa: E402
+from android_whitenoise import monkeypatch_whitenoise  # noqa: E402
+
+monkeypatch_whitenoise()
+
 signing_org = get_signature_key_issuing_organization()
 if signing_org == "Learning Equality":
     runmode = "android-testing"
@@ -41,9 +46,11 @@ os.environ["LC_ALL"] = "en_US.UTF-8"
 
 os.environ["KOLIBRI_HOME"] = get_home_folder()
 
-endless_key_paths = get_endless_key_paths()
-if endless_key_paths is not None:
-    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = endless_key_paths["content_path"]
+endless_key_uris = get_endless_key_uris()
+if endless_key_uris is not None:
+    content_uri = DynamicWhiteNoise.encode_root(endless_key_uris["content"])
+    logging.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_uri)
+    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_uri
 
 os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
 os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"
