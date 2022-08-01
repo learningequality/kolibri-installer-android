@@ -169,3 +169,87 @@ connected to with `adb` in all the ways shown above. When you're done with the
 emulator, you can stop it with `Ctrl-C` from the terminal where you started
 it. By default, the emulator stores snapshots and the next time you start that
 AVD it will be in the same state.
+
+### Emulator SD Card
+
+The Android Emulator does not support removable storage such as USB drives.
+However, you can approximate that experience using an SD card. By default,
+`avdmanager` will not create an SD card connected to the device. To use one,
+add `--sdcard 1G` to the `avdmanager create avd` command above. That will
+create a 1 GB card image, but other sizes can be used with typical suffixes
+like `M` for MB.
+
+The SD card can be populated within Android from the file manager, but this
+can be cumbersome. Instead, you can work with the SD card image from the host.
+Run `avdmanager list avd` to get the path to the AVD that was created. The SD
+card disk image will be in that directory named `sdcard.img`. This is a raw
+disk image with no partitions containing a FAT filesystem. Once the emulator
+is started, a second file named `sdcard.img.qcow2` will be created. This is a
+[QEMU disk
+image](https://www.qemu.org/docs/master/system/qemu-block-drivers.html#cmdoption-image-formats-arg-qcow2)
+that's setup to use the original `sdcard.img` file as a read only base image.
+Once the qcow2 image has been created, any changes to the `sdcard.img` file
+will not be reflected in the SD card seen in the emulator.
+
+If the emulator hasn't been run yet, the raw disk image can be updated to
+include any desired files by mounting the FAT filesystem locally. First,
+create a loop block device pointing to the raw disk image:
+
+```
+sudo losetup --show -f ~/.android/avd/test.avd/sdcard.img
+```
+
+This will show the connected loop device. Assuming the first device,
+`/dev/loop0`, it can now be mounted:
+
+```
+sudo mount /dev/loop0 /mnt
+```
+
+Now the filesystem will be mounted at `/mnt` and files can be added or
+removed. When done, unmount the filesystem and disconnect the loop device:
+
+```
+sudo umount /mnt
+sudo losetup -d /dev/loop0
+```
+
+If the qcow2 image has already been created, it can be accessed with some help
+from QEMU's network block device (NBD) server,
+[qemu-nbd](https://www.qemu.org/docs/master/tools/qemu-nbd.html). This tool is
+included in the `qemu-utils` package on Debian systems.
+
+First, ensure that the kernel's `nbd` module is loaded:
+
+```
+sudo modprobe nbd
+```
+
+Now a network block device can be connected and mounted similar to the above
+raw image usage:
+
+```
+sudo qemu-nbd -c /dev/nbd0 ~/.android/avd/test.avd/sdcard.img.qcow2
+sudo mount /dev/nbd0 /mnt
+```
+
+When done, unmount the filesystem and disconnect the block device:
+
+```
+sudo umount /mnt
+sudo qemu-nbd -d /dev/nbd0
+```
+
+In order to share an SD card among multiple AVDs, one can be created ahead of
+time using the emulator's `mksdcard` tool:
+
+```
+/opt/android/sdk/emulator/mksdcard 512M ~/.android/avd/test-sdcard.img
+```
+
+This would create a 512 MB SD card image at `~/.android/avd/test-sdcard.img`.
+When creating an AVD, provide this path to the `--sdcard` option instead of
+providing a size. Once this image is used is an emulator, a qcow2 image will
+be created wrapping it at `~/.android/avd/test-sdcard.img.qcow2`. In this way,
+it can be accessed from the host in the same ways as an SD card image created
+by `avdmanager`.
