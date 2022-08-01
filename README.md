@@ -114,3 +114,58 @@ You could also do so using [Weinre](https://people.apache.org/~pmuellr/weinre/do
 The image was optimized to limit rebuilding and to be run in a developer-centric way. `scripts/rundocker.sh` describes the options needed to get the build running properly.
 
 Unless you need to make edits to the build method or are debugging one of the build dependencies and would like to continue using docker, you shouldn't need to modify that script.
+
+## Using the Android Emulator
+
+Installing the APK to a real device during development is slow. Instead, the
+[Android Emulator](https://developer.android.com/studio/run/emulator) can be
+used for faster installs in a clean environment. The recommended way to use
+the emulator is through Android Studio, but it can also be invoked directly.
+
+First, ensure the emulator is installed in the Android SDK. The `make setup`
+target will install the necessary pieces. Assuming the SDK is installed in
+`/opt/android/sdk`:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager emulator
+```
+
+Next, install a platform and system image:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "system-images;android-30;default;x86_64"
+```
+
+Now an [Android Virtual Device
+(AVD)](https://developer.android.com/studio/run/managing-avds) needs to be
+created. This can be done from the command line with
+[avdmanager](https://developer.android.com/studio/command-line/avdmanager).
+
+There are many device definitions available. To see the list, run:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/avdmanager list device
+```
+
+To create an AVD, a name, system image and device must be provided. Assuming
+the system image provided above and a Pixel 5 device:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/avdmanager create avd --name test \
+  --package "system-images;android-30;default;x86_64" --device pixel_5
+```
+
+The AVD should be ready now and `avdmanager list avd` will show the details.
+Start it [from the
+emulator](https://developer.android.com/studio/run/emulator-commandline):
+
+```
+/opt/android/sdk/emulator/emulator -avd test
+```
+
+A window should show up showing Android booting. Once it's running, it can be
+connected to with `adb` in all the ways shown above. When you're done with the
+emulator, you can stop it with `Ctrl-C` from the terminal where you started
+it. By default, the emulator stores snapshots and the next time you start that
+AVD it will be in the same state.
