@@ -114,3 +114,142 @@ You could also do so using [Weinre](https://people.apache.org/~pmuellr/weinre/do
 The image was optimized to limit rebuilding and to be run in a developer-centric way. `scripts/rundocker.sh` describes the options needed to get the build running properly.
 
 Unless you need to make edits to the build method or are debugging one of the build dependencies and would like to continue using docker, you shouldn't need to modify that script.
+
+## Using the Android Emulator
+
+Installing the APK to a real device during development is slow. Instead, the
+[Android Emulator](https://developer.android.com/studio/run/emulator) can be
+used for faster installs in a clean environment. The recommended way to use
+the emulator is through Android Studio, but it can also be invoked directly.
+
+First, ensure the emulator is installed in the Android SDK. The `make setup`
+target will install the necessary pieces. Assuming the SDK is installed in
+`/opt/android/sdk`:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager emulator
+```
+
+Next, install a platform and system image:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "system-images;android-30;default;x86_64"
+```
+
+Now an [Android Virtual Device
+(AVD)](https://developer.android.com/studio/run/managing-avds) needs to be
+created. This can be done from the command line with
+[avdmanager](https://developer.android.com/studio/command-line/avdmanager).
+
+There are many device definitions available. To see the list, run:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/avdmanager list device
+```
+
+To create an AVD, a name, system image and device must be provided. Assuming
+the system image provided above and a Pixel 5 device:
+
+```
+/opt/android/sdk/cmdline-tools/latest/bin/avdmanager create avd --name test \
+  --package "system-images;android-30;default;x86_64" --device pixel_5
+```
+
+The AVD should be ready now and `avdmanager list avd` will show the details.
+Start it [from the
+emulator](https://developer.android.com/studio/run/emulator-commandline):
+
+```
+/opt/android/sdk/emulator/emulator -avd test
+```
+
+A window should show up showing Android booting. Once it's running, it can be
+connected to with `adb` in all the ways shown above. When you're done with the
+emulator, you can stop it with `Ctrl-C` from the terminal where you started
+it. By default, the emulator stores snapshots and the next time you start that
+AVD it will be in the same state.
+
+### Emulator SD Card
+
+The Android Emulator does not support removable storage such as USB drives.
+However, you can approximate that experience using an SD card. By default,
+`avdmanager` will not create an SD card connected to the device. To use one,
+add `--sdcard 1G` to the `avdmanager create avd` command above. That will
+create a 1 GB card image, but other sizes can be used with typical suffixes
+like `M` for MB.
+
+The SD card can be populated within Android from the file manager, but this
+can be cumbersome. Instead, you can work with the SD card image from the host.
+Run `avdmanager list avd` to get the path to the AVD that was created. The SD
+card disk image will be in that directory named `sdcard.img`. This is a raw
+disk image with no partitions containing a FAT filesystem. Once the emulator
+is started, a second file named `sdcard.img.qcow2` will be created. This is a
+[QEMU disk
+image](https://www.qemu.org/docs/master/system/qemu-block-drivers.html#cmdoption-image-formats-arg-qcow2)
+that's setup to use the original `sdcard.img` file as a read only base image.
+Once the qcow2 image has been created, any changes to the `sdcard.img` file
+will not be reflected in the SD card seen in the emulator.
+
+If the emulator hasn't been run yet, the raw disk image can be updated to
+include any desired files by mounting the FAT filesystem locally. First,
+create a loop block device pointing to the raw disk image:
+
+```
+sudo losetup --show -f ~/.android/avd/test.avd/sdcard.img
+```
+
+This will show the connected loop device. Assuming the first device,
+`/dev/loop0`, it can now be mounted:
+
+```
+sudo mount /dev/loop0 /mnt
+```
+
+Now the filesystem will be mounted at `/mnt` and files can be added or
+removed. When done, unmount the filesystem and disconnect the loop device:
+
+```
+sudo umount /mnt
+sudo losetup -d /dev/loop0
+```
+
+If the qcow2 image has already been created, it can be accessed with some help
+from QEMU's network block device (NBD) server,
+[qemu-nbd](https://www.qemu.org/docs/master/tools/qemu-nbd.html). This tool is
+included in the `qemu-utils` package on Debian systems.
+
+First, ensure that the kernel's `nbd` module is loaded:
+
+```
+sudo modprobe nbd
+```
+
+Now a network block device can be connected and mounted similar to the above
+raw image usage:
+
+```
+sudo qemu-nbd -c /dev/nbd0 ~/.android/avd/test.avd/sdcard.img.qcow2
+sudo mount /dev/nbd0 /mnt
+```
+
+When done, unmount the filesystem and disconnect the block device:
+
+```
+sudo umount /mnt
+sudo qemu-nbd -d /dev/nbd0
+```
+
+In order to share an SD card among multiple AVDs, one can be created ahead of
+time using the emulator's `mksdcard` tool:
+
+```
+/opt/android/sdk/emulator/mksdcard 512M ~/.android/avd/test-sdcard.img
+```
+
+This would create a 512 MB SD card image at `~/.android/avd/test-sdcard.img`.
+When creating an AVD, provide this path to the `--sdcard` option instead of
+providing a size. Once this image is used is an emulator, a qcow2 image will
+be created wrapping it at `~/.android/avd/test-sdcard.img.qcow2`. In this way,
+it can be accessed from the host in the same ways as an SD card image created
+by `avdmanager`.
