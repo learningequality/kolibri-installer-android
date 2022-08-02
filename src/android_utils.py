@@ -442,6 +442,28 @@ def provision_endless_key_database(endless_key_uris):
         logger.debug("EK database provisioned.")
 
 
+def _get_directory_path(volume):
+    if SDK_INT < 30:
+        uuid = volume.getUuid()
+        if uuid is None:
+            return None
+        return os.path.join("/storage", uuid)
+    else:
+        directory_file = volume.getDirectory()
+        if directory_file is None:
+            return None
+        return directory_file.toString()
+
+
+def _get_open_document_intent(volume):
+    # Compatibility with SDK 28 and eariler
+    # https://developer.android.com/sdk/api_diff/29/changes/android.os.storage.StorageVolume#android.os.storage.StorageVolume.createOpenDocumentTreeIntent_added()
+    if SDK_INT < 29:
+        return volume.createAccessIntent(None)
+    else:
+        return volume.createOpenDocumentTreeIntent()
+
+
 def create_open_kolibri_data_intent(context):
     """Create an ACTION_OPEN_DOCUMENT_TREE using KOLIBRI_DATA URI"""
     storage_manager = context.getSystemService(Context.STORAGE_SERVICE)
@@ -451,8 +473,7 @@ def create_open_kolibri_data_intent(context):
         state = volume.getState()
         is_removable = volume.isRemovable()
         uuid = volume.getUuid()
-        directory = volume.getDirectory()
-        path = directory.toString() if directory else None
+        path = _get_directory_path(volume)
         logger.debug(
             "Found volume UUID=%s, state=%s, removable=%s, mount=%s",
             uuid,
@@ -466,16 +487,17 @@ def create_open_kolibri_data_intent(context):
 
         # Create an ACTION_OPEN_DOCUMENT_TREE intent with the URI of the
         # volume root as the EXTRA_INITIAL_URI.
-        intent = volume.createOpenDocumentTreeIntent()
+        intent = _get_open_document_intent(volume)
+        intent_data = intent.getParcelableExtra(DocumentsContract.EXTRA_INITIAL_URI)
+
+        if not intent_data:
+            continue
 
         # Extract the initial URI from the intent and then adjust it so
         # it includes the expected KOLIBRI_DATA path. If that path
         # doesn't exist, then the file picker will use the default
         # internal storage root.
-        initial_uri = cast(
-            "android.net.Uri",
-            intent.getParcelableExtra(DocumentsContract.EXTRA_INITIAL_URI),
-        )
+        initial_uri = cast("android.net.Uri", intent_data)
         logger.debug(
             "Volume %s OPEN_DOCUMENT_TREE initial URI: %s", uuid, initial_uri.toString()
         )
