@@ -131,13 +131,25 @@ except FileNotFoundError:
     pass
 
 
+def go_to_endless_key_view_function():
+    PythonActivity.mWebView.evaluateJavascript("show_endless_key()", None)
+
+
+go_to_endless_key_view = Runnable(go_to_endless_key_view_function)
+
+
 def start_kolibri_with_usb():
     key_uris = get_endless_key_uris()
+
     if not key_uris:
         key_uris = choose_endless_key_uris()
-    if key_uris:
-        provision_endless_key_database(key_uris)
-        set_endless_key_uris(key_uris)
+
+    if not key_uris:
+        go_to_endless_key_view()
+        return
+
+    provision_endless_key_database(key_uris)
+    set_endless_key_uris(key_uris)
     start_kolibri()
 
 
