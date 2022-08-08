@@ -132,7 +132,7 @@ except FileNotFoundError:
 
 
 def go_to_endless_key_view_function():
-    PythonActivity.mWebView.evaluateJavascript("show_endless_key()", None)
+    PythonActivity.mWebView.evaluateJavascript("show_wrong_folder()", None)
 
 
 go_to_endless_key_view = Runnable(go_to_endless_key_view_function)
