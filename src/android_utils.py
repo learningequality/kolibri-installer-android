@@ -149,6 +149,7 @@ def get_endless_key_uris():
 
 
 def choose_endless_key_uris():
+    """Call the file picker and validate the chosen folder"""
     activity = get_activity()
     data_uri = choose_directory(activity, msg="Select the KOLIBRI_DATA folder")
 

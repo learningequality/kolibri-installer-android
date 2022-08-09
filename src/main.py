@@ -131,21 +131,21 @@ except FileNotFoundError:
     pass
 
 
-def go_to_endless_key_view_function():
+def show_wrong_folder_view():
     PythonActivity.mWebView.evaluateJavascript("show_wrong_folder()", None)
 
 
-go_to_endless_key_view = Runnable(go_to_endless_key_view_function)
+show_wrong_folder = Runnable(show_wrong_folder_view)
 
 
 def start_kolibri_with_usb():
     key_uris = get_endless_key_uris()
 
-    if not key_uris:
+    if key_uris is None:
         key_uris = choose_endless_key_uris()
 
-    if not key_uris:
-        go_to_endless_key_view()
+    if key_uris is None:
+        show_wrong_folder()
         return
 
     provision_endless_key_database(key_uris)
