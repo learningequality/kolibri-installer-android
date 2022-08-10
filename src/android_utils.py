@@ -67,6 +67,14 @@ if not hasattr(Path, "is_relative_to"):
     Path.is_relative_to = _path_is_relative_to
 
 
+class PermissionsCancelledError(Exception):
+    pass
+
+
+class PermissionsWrongFolderError(Exception):
+    pass
+
+
 def is_service_context():
     return "PYTHON_SERVICE_ARGUMENT" in os.environ
 
@@ -155,7 +163,7 @@ def choose_endless_key_uris():
 
     if data_uri is None:
         logger.info("User cancelled Endless Key selection")
-        return None
+        raise PermissionsCancelledError()
 
     tree_uri = Uri.parse(data_uri)
     tree_doc_id = DocumentsContract.getTreeDocumentId(tree_uri)
@@ -167,13 +175,13 @@ def choose_endless_key_uris():
     content = tree_files.get("content")
     if not content or content["mime_type"] != Document.MIME_TYPE_DIR:
         logger.info("The selected folder does not contain a content folder")
-        return None
+        raise PermissionsWrongFolderError()
     content_uri = content["uri"].toString()
 
     preseeded_home = tree_files.get("preseeded_kolibri_home")
     if not preseeded_home or preseeded_home["mime_type"] != Document.MIME_TYPE_DIR:
         logger.info("The selected folder does not contain a preseeded_kolibri_home folder")
-        return None
+        raise PermissionsWrongFolderError()
     preseeded_home_files = document_tree_list_files(
         preseeded_home["uri"], content_resolver
     )
@@ -181,7 +189,7 @@ def choose_endless_key_uris():
     db = preseeded_home_files.get("db.sqlite3")
     if not db or ["mime_type"] == Document.MIME_TYPE_DIR:
         logger.info("The selected folder does not contain a db.sqlite3 file in the preseeded_kolibri_home folder")
-        return None
+        raise PermissionsWrongFolderError()
     db_uri = db["uri"].toString()
 
     logger.info("Found Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
