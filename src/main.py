@@ -90,7 +90,9 @@ def on_loading_ready():
         logging.info("Starting USB mode")
         # Require usb
         if not get_endless_key_uris():
-            PythonActivity.mWebView.evaluateJavascript("show_endless_key_required()", None)
+            PythonActivity.mWebView.evaluateJavascript(
+                "show_endless_key_required()", None
+            )
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
 

@@ -180,7 +180,9 @@ def choose_endless_key_uris():
 
     preseeded_home = tree_files.get("preseeded_kolibri_home")
     if not preseeded_home or preseeded_home["mime_type"] != Document.MIME_TYPE_DIR:
-        logger.info("The selected folder does not contain a preseeded_kolibri_home folder")
+        logger.info(
+            "The selected folder does not contain a preseeded_kolibri_home folder"
+        )
         raise PermissionsWrongFolderError()
     preseeded_home_files = document_tree_list_files(
         preseeded_home["uri"], content_resolver
@@ -188,7 +190,9 @@ def choose_endless_key_uris():
 
     db = preseeded_home_files.get("db.sqlite3")
     if not db or ["mime_type"] == Document.MIME_TYPE_DIR:
-        logger.info("The selected folder does not contain a db.sqlite3 file in the preseeded_kolibri_home folder")
+        logger.info(
+            "The selected folder does not contain a db.sqlite3 file in the preseeded_kolibri_home folder"
+        )
         raise PermissionsWrongFolderError()
     db_uri = db["uri"].toString()
 
