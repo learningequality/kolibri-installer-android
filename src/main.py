@@ -6,6 +6,8 @@ import time
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
 from android_utils import choose_endless_key_uris
 from android_utils import get_endless_key_uris
+from android_utils import PermissionsCancelledError
+from android_utils import PermissionsWrongFolderError
 from android_utils import provision_endless_key_database
 from android_utils import set_endless_key_uris
 from android_utils import start_service
@@ -88,7 +90,9 @@ def on_loading_ready():
         logging.info("Starting USB mode")
         # Require usb
         if not get_endless_key_uris():
-            PythonActivity.mWebView.evaluateJavascript("show_endless_key()", None)
+            PythonActivity.mWebView.evaluateJavascript(
+                "show_endless_key_required()", None
+            )
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
 
@@ -131,22 +135,32 @@ except FileNotFoundError:
     pass
 
 
-def go_to_endless_key_view_function():
+def show_permissions_cancelled_view():
+    PythonActivity.mWebView.evaluateJavascript("show_permissions_cancelled()", None)
+
+
+show_permissions_cancelled = Runnable(show_permissions_cancelled_view)
+
+
+def show_wrong_folder_view():
     PythonActivity.mWebView.evaluateJavascript("show_wrong_folder()", None)
 
 
-go_to_endless_key_view = Runnable(go_to_endless_key_view_function)
+show_wrong_folder = Runnable(show_wrong_folder_view)
 
 
 def start_kolibri_with_usb():
     key_uris = get_endless_key_uris()
 
-    if not key_uris:
-        key_uris = choose_endless_key_uris()
-
-    if not key_uris:
-        go_to_endless_key_view()
-        return
+    if key_uris is None:
+        try:
+            key_uris = choose_endless_key_uris()
+        except PermissionsWrongFolderError:
+            show_wrong_folder()
+            return
+        except PermissionsCancelledError:
+            show_permissions_cancelled()
+            return
 
     provision_endless_key_database(key_uris)
     set_endless_key_uris(key_uris)

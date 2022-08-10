@@ -44,6 +44,8 @@ public class FullScreen {
                 // TODO: enable the loading when the USB is connected?
                 mWebView.evaluateJavascript("setHasUSB(true)", null);
 
+                mWebView.evaluateJavascript("setNeedsPermission(true)", null);
+
                 if (!mInWelcome && url.contains("loadingScreen/index.html")) {
                     loadingReady.run();
                     mInWelcome = true;
