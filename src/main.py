@@ -12,6 +12,7 @@ from android_utils import provision_endless_key_database
 from android_utils import set_endless_key_uris
 from android_utils import start_service
 from android_utils import StartupState
+from android_utils import stat_file
 from jnius import autoclass
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
@@ -78,6 +79,39 @@ def load_with_usb():
     TO_RUN_IN_MAIN = start_kolibri_with_usb
 
 
+def evaluate_javascript(js_code):
+    PythonActivity.mWebView.evaluateJavascript(js_code, None)
+
+
+evaluate_javascript = Runnable(evaluate_javascript)
+
+
+def is_usb_connected():
+    """
+    Check if the KOLIBRI_HOME db file is reachable.
+
+    This only works after the user has granted permissions correctly. In other
+    case it always return False.
+    """
+
+    key_uris = get_endless_key_uris()
+    if not key_uris:
+        return False
+    try:
+        # Check if the USB is connected
+        stat_file(key_uris.get("db"))
+        evaluate_javascript("setHasUSB(true)")
+        return True
+    except FileNotFoundError:
+        evaluate_javascript("setHasUSB(false)")
+        return False
+
+
+def wait_until_usb_is_connected():
+    repeat = not is_usb_connected()
+    return repeat
+
+
 def on_loading_ready():
     global TO_RUN_IN_MAIN
 
@@ -88,11 +122,13 @@ def on_loading_ready():
 
     elif startup_state == StartupState.USB_USER:
         logging.info("Starting USB mode")
-        # Require usb
-        if not get_endless_key_uris():
-            PythonActivity.mWebView.evaluateJavascript(
-                "show_endless_key_required()", None
-            )
+        # If it's USB we should have the permissions here so it's not needed to
+        # ask again
+
+        if not is_usb_connected():
+            evaluate_javascript("show_endless_key_required()")
+            evaluate_javascript("setNeedsPermission(false)")
+            TO_RUN_IN_MAIN = wait_until_usb_is_connected
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
 
@@ -135,20 +171,6 @@ except FileNotFoundError:
     pass
 
 
-def show_permissions_cancelled_view():
-    PythonActivity.mWebView.evaluateJavascript("show_permissions_cancelled()", None)
-
-
-show_permissions_cancelled = Runnable(show_permissions_cancelled_view)
-
-
-def show_wrong_folder_view():
-    PythonActivity.mWebView.evaluateJavascript("show_wrong_folder()", None)
-
-
-show_wrong_folder = Runnable(show_wrong_folder_view)
-
-
 def start_kolibri_with_usb():
     key_uris = get_endless_key_uris()
 
@@ -156,10 +178,10 @@ def start_kolibri_with_usb():
         try:
             key_uris = choose_endless_key_uris()
         except PermissionsWrongFolderError:
-            show_wrong_folder()
+            evaluate_javascript("show_wrong_folder()")
             return
         except PermissionsCancelledError:
-            show_permissions_cancelled()
+            evaluate_javascript("show_permissions_cancelled()")
             return
 
     provision_endless_key_database(key_uris)
@@ -190,6 +212,9 @@ def start_kolibri():
 
 while True:
     if callable(TO_RUN_IN_MAIN):
-        TO_RUN_IN_MAIN()
-        TO_RUN_IN_MAIN = False
+        repeat = TO_RUN_IN_MAIN()
+        if not repeat:
+            TO_RUN_IN_MAIN = None
+        # Wait a bit after each main function call
+        time.sleep(0.5)
     time.sleep(0.05)
