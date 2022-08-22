@@ -127,7 +127,6 @@ def on_loading_ready():
 
         if not is_usb_connected():
             evaluate_javascript("show_endless_key_required()")
-            evaluate_javascript("setNeedsPermission(false)")
             TO_RUN_IN_MAIN = wait_until_usb_is_connected
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
