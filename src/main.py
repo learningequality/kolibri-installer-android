@@ -6,6 +6,7 @@ import time
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
 from android_utils import choose_endless_key_uris
 from android_utils import get_endless_key_uris
+from android_utils import has_any_external_storage_device
 from android_utils import PermissionsCancelledError
 from android_utils import PermissionsWrongFolderError
 from android_utils import provision_endless_key_database
@@ -46,6 +47,7 @@ OPTIONAL_PLUGINS = [
 
 
 TO_RUN_IN_MAIN = None
+_last_has_any_check = None
 
 
 def _disable_kolibri_plugin(plugin_name: str) -> bool:
@@ -86,6 +88,22 @@ def evaluate_javascript(js_code):
 evaluate_javascript = Runnable(evaluate_javascript)
 
 
+def check_has_any_external_storage_device():
+    # Memorize the last check to avoid evaluating javascript when not
+    # needed:
+    global _last_has_any_check
+    has_any = has_any_external_storage_device()
+    if has_any != _last_has_any_check:
+        _last_has_any_check = has_any
+        if has_any:
+            evaluate_javascript("setHasUSB(true)")
+        else:
+            evaluate_javascript("setHasUSB(false)")
+    # By returning True the main loop calls this function over and
+    # over again, until another function TO_RUN_IN_MAIN is set.
+    return True
+
+
 def is_usb_connected():
     """
     Check if the KOLIBRI_HOME db file is reachable.
@@ -118,7 +136,9 @@ def on_loading_ready():
     startup_state = StartupState.get_current_state()
     if startup_state == StartupState.FIRST_TIME:
         logging.info("First time")
-        PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
+        evaluate_javascript("show_welcome()")
+
+        TO_RUN_IN_MAIN = check_has_any_external_storage_device
 
     elif startup_state == StartupState.USB_USER:
         logging.info("Starting USB mode")
