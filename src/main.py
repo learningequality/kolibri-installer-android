@@ -104,7 +104,7 @@ def check_has_any_external_storage_device():
     return True
 
 
-def is_usb_connected():
+def is_endless_key_reachable():
     """
     Check if the KOLIBRI_HOME db file is reachable.
 
@@ -125,8 +125,8 @@ def is_usb_connected():
         return False
 
 
-def wait_until_usb_is_connected():
-    repeat = not is_usb_connected()
+def wait_until_endless_key_is_reachable():
+    repeat = not is_endless_key_reachable()
     return repeat
 
 
@@ -145,9 +145,9 @@ def on_loading_ready():
         # If it's USB we should have the permissions here so it's not needed to
         # ask again
 
-        if not is_usb_connected():
+        if not is_endless_key_reachable():
             evaluate_javascript("show_endless_key_required()")
-            TO_RUN_IN_MAIN = wait_until_usb_is_connected
+            TO_RUN_IN_MAIN = wait_until_endless_key_is_reachable
         else:
             TO_RUN_IN_MAIN = start_kolibri_with_usb
 
