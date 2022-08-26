@@ -465,6 +465,23 @@ def _get_open_document_intent(volume):
         return volume.createOpenDocumentTreeIntent()
 
 
+def has_any_external_storage_device():
+    activity = get_activity()
+    storage_manager = activity.getSystemService(Context.STORAGE_SERVICE)
+
+    found = False
+
+    for volume in storage_manager.getStorageVolumes():
+        if volume is None:
+            continue
+
+        elif volume.isRemovable() and volume.getState() == "mounted":
+            found = True
+            break
+
+    return found
+
+
 def create_open_kolibri_data_intent(context):
     """Create an ACTION_OPEN_DOCUMENT_TREE using KOLIBRI_DATA URI"""
     storage_manager = context.getSystemService(Context.STORAGE_SERVICE)
