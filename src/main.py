@@ -11,9 +11,38 @@ from kolibri.utils.server import BaseKolibriProcessBus
 from kolibri.utils.server import KolibriServerPlugin
 from kolibri.utils.server import ZeroConfPlugin
 from kolibri.utils.server import ZipContentServerPlugin
+from lifecycle import register_activity_lifecycle_callbacks
 from magicbus.plugins import SimplePlugin
 from runnable import Runnable
 
+
+def on_activity_started(activity):
+    logging.info("onActivityStarted")
+
+
+def on_activity_paused(activity):
+    logging.info("onActivityPaused")
+
+
+def on_activity_resumed(activity):
+    logging.info("onActivityResumed")
+
+
+def on_activity_stopped(activity):
+    logging.info("onActivityStopped")
+
+
+def on_activity_destroyed(activity):
+    logging.info("onActivityDestroyed")
+
+
+register_activity_lifecycle_callbacks(
+    onActivityStarted=on_activity_started,
+    onActivityPaused=on_activity_paused,
+    onActivityResumed=on_activity_resumed,
+    onActivityStopped=on_activity_stopped,
+    onActivityDestroyed=on_activity_destroyed,
+)
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 
