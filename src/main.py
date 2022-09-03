@@ -10,6 +10,7 @@ from android_utils import PermissionsCancelledError
 from android_utils import PermissionsWrongFolderError
 from android_utils import provision_endless_key_database
 from android_utils import set_endless_key_uris
+from android_utils import share_by_intent
 from android_utils import start_service
 from android_utils import StartupState
 from android_utils import stat_file
@@ -17,31 +18,33 @@ from jnius import autoclass
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
 from kolibri.plugins.registry import registered_plugins
-from kolibri.plugins.utils import disable_plugin
-from kolibri.plugins.utils import enable_plugin
+from kolibri.main import disable_plugin
+from kolibri.main import enable_plugin
 from kolibri.utils.cli import initialize
-from kolibri.utils.server import _read_pid_file
-from kolibri.utils.server import PID_FILE
-from kolibri.utils.server import STATUS_RUNNING
-from kolibri.utils.server import wait_for_status
+from kolibri.utils.server import BaseKolibriProcessBus
+from kolibri.utils.server import KolibriServerPlugin
+from kolibri.utils.server import ZeroConfPlugin
+from kolibri.utils.server import ZipContentServerPlugin
+from magicbus.plugins import SimplePlugin
 from runnable import Runnable
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
 # or OPTIONAL_PLUGINS:
 DISABLED_PLUGINS = [
-    "kolibri.plugins.learn",
+    # "kolibri.plugins.learn",
 ]
 
 # These Kolibri plugins must be enabled for the application to function
 # correctly:
 REQUIRED_PLUGINS = [
     "kolibri.plugins.app",
+    "kolibri_explore_plugin",
 ]
 
 # These Kolibri plugins will be dynamically enabled if they are available:
 OPTIONAL_PLUGINS = [
-    "kolibri_explore_plugin",
-    "kolibri_zim_plugin",
+    # "kolibri_explore_plugin",
+    # "kolibri_zim_plugin",
 ]
 
 
@@ -113,28 +116,29 @@ def wait_until_usb_is_connected():
 
 
 def on_loading_ready():
-    global TO_RUN_IN_MAIN
+    pass
+    # global TO_RUN_IN_MAIN
 
-    startup_state = StartupState.get_current_state()
-    if startup_state == StartupState.FIRST_TIME:
-        logging.info("First time")
-        PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
+    # startup_state = StartupState.get_current_state()
+    # if startup_state == StartupState.FIRST_TIME:
+    #     logging.info("First time")
+    #     PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
 
-    elif startup_state == StartupState.USB_USER:
-        logging.info("Starting USB mode")
-        # If it's USB we should have the permissions here so it's not needed to
-        # ask again
+    # elif startup_state == StartupState.USB_USER:
+    #     logging.info("Starting USB mode")
+    #     # If it's USB we should have the permissions here so it's not needed to
+    #     # ask again
 
-        if not is_usb_connected():
-            evaluate_javascript("show_endless_key_required()")
-            evaluate_javascript("setNeedsPermission(false)")
-            TO_RUN_IN_MAIN = wait_until_usb_is_connected
-        else:
-            TO_RUN_IN_MAIN = start_kolibri_with_usb
+    #     if not is_usb_connected():
+    #         evaluate_javascript("show_endless_key_required()")
+    #         evaluate_javascript("setNeedsPermission(false)")
+    #         TO_RUN_IN_MAIN = wait_until_usb_is_connected
+    #     else:
+    #         TO_RUN_IN_MAIN = start_kolibri_with_usb
 
-    else:
-        logging.info("Starting network mode")
-        TO_RUN_IN_MAIN = start_kolibri
+    # else:
+    #     logging.info("Starting network mode")
+    #     TO_RUN_IN_MAIN = start_kolibri
 
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
@@ -151,10 +155,25 @@ configureWebview(
 
 loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 
+
+class AppPlugin(SimplePlugin):
+    def __init__(self, bus):
+        self.bus = bus
+        self.bus.subscribe("SERVING", self.SERVING)
+
+    def SERVING(self, port):
+        start_url = (
+            "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+        )
+        loadUrl(start_url)
+        start_service("workers")
+
+
 logging.info("Initializing Kolibri and running any upgrade routines")
 
 loadUrl("file:///android_asset/_load.html")
 
+# FIXME
 for plugin_name in DISABLED_PLUGINS:
     _disable_kolibri_plugin(plugin_name)
 
@@ -164,11 +183,7 @@ for plugin_name in REQUIRED_PLUGINS:
 for plugin_name in OPTIONAL_PLUGINS:
     _enable_kolibri_plugin(plugin_name, optional=True)
 
-# Ensure that the pidfile is removed on startup
-try:
-    os.unlink(PID_FILE)
-except FileNotFoundError:
-    pass
+# enable_plugin("kolibri.plugins.app")
 
 
 def start_kolibri_with_usb():
@@ -193,28 +208,39 @@ def start_kolibri():
     # we need to initialize Kolibri to allow us to access the app key
     initialize()
 
+    interface.register(share_file=share_by_intent)
+
     # start kolibri server
-    logging.info("Starting kolibri server via Android service...")
-    start_service("server")
+    logging.info("Starting kolibri server.")
 
-    # Tie up this thread until the server is running
-    wait_for_status(STATUS_RUNNING, timeout=120)
-
-    _, port, _, _ = _read_pid_file(PID_FILE)
-
-    start_url = (
-        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    kolibri_bus = BaseKolibriProcessBus()
+    # Setup zeroconf plugin
+    zeroconf_plugin = ZeroConfPlugin(kolibri_bus, kolibri_bus.port)
+    zeroconf_plugin.subscribe()
+    kolibri_server = KolibriServerPlugin(
+        kolibri_bus,
+        kolibri_bus.port,
     )
-    loadUrl(start_url)
 
-    start_service("remoteshell")
+    alt_port_server = ZipContentServerPlugin(
+        kolibri_bus,
+        kolibri_bus.zip_port,
+    )
+    # Subscribe these servers
+    kolibri_server.subscribe()
+    alt_port_server.subscribe()
+    app_plugin = AppPlugin(kolibri_bus)
+    app_plugin.subscribe()
+    kolibri_bus.run()
 
 
-while True:
-    if callable(TO_RUN_IN_MAIN):
-        repeat = TO_RUN_IN_MAIN()
-        if not repeat:
-            TO_RUN_IN_MAIN = None
-        # Wait a bit after each main function call
-        time.sleep(0.5)
-    time.sleep(0.05)
+start_kolibri()
+
+# while True:
+#     if callable(TO_RUN_IN_MAIN):
+#         repeat = TO_RUN_IN_MAIN()
+#         if not repeat:
+#             TO_RUN_IN_MAIN = None
+#         # Wait a bit after each main function call
+#         time.sleep(0.5)
+#     time.sleep(0.05)
