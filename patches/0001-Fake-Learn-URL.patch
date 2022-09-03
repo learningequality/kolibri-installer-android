@@ -1,0 +1,27 @@
+From 2a04e4186618378ec5f4ed8e2fee8cf953268df0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Manuel=20Qui=C3=B1ones?= <manuel.por.aca@gmail.com>
+Date: Mon, 5 Sep 2022 18:00:54 -0300
+Subject: [PATCH] Fake Learn URL
+
+---
+ kolibri/plugins/learn/kolibri_plugin.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/kolibri/plugins/learn/kolibri_plugin.py b/kolibri/plugins/learn/kolibri_plugin.py
+index 29316ca64c..ca17adff2f 100644
+--- a/kolibri/plugins/learn/kolibri_plugin.py
++++ b/kolibri/plugins/learn/kolibri_plugin.py
+@@ -43,7 +43,9 @@ class LearnRedirect(RoleBasedRedirectHook):
+ 
+     @property
+     def url(self):
+-        return self.plugin_url(Learn, "learn")
++        print("FAKING URL")
++        return "/en/explore/"
++        # return self.plugin_url(Learn, "learn")
+ 
+ 
+ @register_hook
+-- 
+2.30.2
+
