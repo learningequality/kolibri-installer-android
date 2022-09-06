@@ -25,6 +25,7 @@ from kolibri.utils.server import _read_pid_file
 from kolibri.utils.server import PID_FILE
 from kolibri.utils.server import STATUS_RUNNING
 from kolibri.utils.server import wait_for_status
+from lifecycle import register_activity_lifecycle_callbacks
 from runnable import Runnable
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
@@ -155,6 +156,34 @@ def on_loading_ready():
         logging.info("Starting network mode")
         TO_RUN_IN_MAIN = start_kolibri
 
+
+def on_activity_started(activity):
+    logging.info("onActivityStarted")
+
+
+def on_activity_paused(activity):
+    logging.info("onActivityPaused")
+
+
+def on_activity_resumed(activity):
+    logging.info("onActivityResumed")
+
+
+def on_activity_stopped(activity):
+    logging.info("onActivityStopped")
+
+
+def on_activity_destroyed(activity):
+    logging.info("onActivityDestroyed")
+
+
+register_activity_lifecycle_callbacks(
+    onActivityStarted=on_activity_started,
+    onActivityPaused=on_activity_paused,
+    onActivityResumed=on_activity_resumed,
+    onActivityStopped=on_activity_stopped,
+    onActivityDestroyed=on_activity_destroyed,
+)
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 
