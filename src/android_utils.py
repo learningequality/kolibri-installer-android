@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import socket
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -231,3 +232,26 @@ def get_signature_key_issuing_organization():
     else:
         print("Using cached value for issuing org")
     return value
+
+
+def next_free_port(port=9000, max_port=65535):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while port <= max_port:
+        try:
+            sock.bind(("", port))
+            sock.close()
+            return port
+        except OSError:
+            port += 1
+    raise IOError("No free ports")
+
+
+def get_main_port():
+    port_cache_key = "PORT"
+    from_cache = True
+    port = value_cache.get(port_cache_key)
+    if port is None:
+        from_cache = False
+        port = next_free_port()
+        value_cache.set(port_cache_key, str(port))
+    return from_cache, int(port)
