@@ -116,8 +116,6 @@ src/kolibri: clean
 	src/kolibri/dist/sqlalchemy/testing
 	find src/kolibri -name '*.js.map' -exec rm '{}' '+'
 	# End of cleanup.
-	pip install --target=src --no-deps kolibri_explore_plugin
-	cp -r src/kolibri_explore_plugin/loadingScreen/ assets/
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
@@ -147,6 +145,13 @@ src/collections: clean-collections collections.zip
 	mv endless-key-collections-main/json/ src/collections
 	rm -rf endless-key-collections-main
 
+clean-loadingScreen:
+	- rm -rf assets/loadingScreen _explore
+
+assets/loadingScreen: clean-loadingScreen
+	pip install --target=_explore --no-deps kolibri_explore_plugin
+	cp -r _explore/kolibri_explore_plugin/loadingScreen/ assets/
+
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
 	$(P4A) create $(ARCH_OPTIONS)
@@ -159,7 +164,7 @@ needs-version: src/kolibri
 .PHONY: kolibri.apk
 # Build the signed version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
+kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
@@ -172,7 +177,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections need
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
+kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
@@ -181,7 +186,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collect
 .PHONY: kolibri.aab
 # Build the signed version of the aab
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections needs-version
+kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
