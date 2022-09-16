@@ -50,6 +50,13 @@ ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 RELEASE = ANDROID_VERSION.RELEASE
 SDK_INT = ANDROID_VERSION.SDK_INT
 
+# Chrome OS constant UUID for the My Files volume. In Android this shows
+# up as a removable volume, which throws off the detection of USB
+# devices. Below it's filtered out from removable storage searches.
+#
+# https://source.chromium.org/chromium/chromium/src/+/main:ash/components/arc/volume_mounter/arc_volume_mounter_bridge.cc;l=51
+MY_FILES_UUID = "0000000000000000000000000000CAFEF00D2019"
+
 
 USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 
@@ -472,7 +479,7 @@ def has_any_external_storage_device():
     found = False
 
     for volume in storage_manager.getStorageVolumes():
-        if volume is None:
+        if volume is None or volume.getUuid() == MY_FILES_UUID:
             continue
 
         elif volume.isRemovable() and volume.getState() == "mounted":
@@ -500,7 +507,7 @@ def create_open_kolibri_data_intent(context):
             path,
         )
 
-        if not is_removable or state != "mounted":
+        if not is_removable or state != "mounted" or uuid == MY_FILES_UUID:
             continue
 
         # Create an ACTION_OPEN_DOCUMENT_TREE intent with the URI of the
