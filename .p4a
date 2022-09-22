@@ -5,12 +5,12 @@
 --private "src"
 --local-recipes "p4a-recipes"
 --orientation sensor
---requirements python3,android,pyjnius,genericndkbuild,sqlite3,cryptography,twisted,attrs,bcrypt,service_identity,pyasn1,pyasn1_modules,pyopenssl,openssl,six,liblzma,zstandard,beautifulsoup4==4.10.0,zimply_core,kolibri_explore_plugin,kolibri_zim_plugin
+--requirements python3,android,pyjnius,genericndkbuild,sqlite3,cryptography,twisted,attrs,bcrypt,service_identity,pyasn1,pyasn1_modules,pyopenssl,openssl,six,liblzma,zstandard,beautifulsoup4==4.10.0,zimply_core,kolibri_explore_plugin~=3.0,kolibri_zim_plugin
 --android-api 30
 --minsdk 21
 --permission ACCESS_NETWORK_STATE
 --permission FOREGROUND_SERVICE
---service server:server.py:foreground:sticky
+--service workers:workers.py
 --service remoteshell:remoteshell.py
 --presplash assets/presplash.png
 --presplash-color #F15A22

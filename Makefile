@@ -119,8 +119,8 @@ src/kolibri: clean
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
-	patch -d src/ -p1 < patches/0001-server-Set-STATUS_RUNNING-just-once.patch
-	patch -d src/ -p1 < patches/0001-Requeue-RUNNING-jobs-on-startup.patch
+	# FIXME: Ugly workaround for https://github.com/learningequality/kolibri/issues/9696
+	patch -d src/ -p1 < patches/0001-Fake-Learn-URL.patch
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:

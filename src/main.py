@@ -1,6 +1,5 @@
 import importlib
 import logging
-import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
@@ -11,21 +10,22 @@ from android_utils import PermissionsCancelledError
 from android_utils import PermissionsWrongFolderError
 from android_utils import provision_endless_key_database
 from android_utils import set_endless_key_uris
+from android_utils import share_by_intent
 from android_utils import start_service
 from android_utils import StartupState
 from android_utils import stat_file
 from jnius import autoclass
+from kolibri.main import disable_plugin
+from kolibri.main import enable_plugin
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
-from kolibri.plugins.registry import registered_plugins
-from kolibri.plugins.utils import disable_plugin
-from kolibri.plugins.utils import enable_plugin
 from kolibri.utils.cli import initialize
-from kolibri.utils.server import _read_pid_file
-from kolibri.utils.server import PID_FILE
-from kolibri.utils.server import STATUS_RUNNING
-from kolibri.utils.server import wait_for_status
+from kolibri.utils.server import BaseKolibriProcessBus
+from kolibri.utils.server import KolibriServerPlugin
+from kolibri.utils.server import ZeroConfPlugin
+from kolibri.utils.server import ZipContentServerPlugin
 from lifecycle import register_activity_lifecycle_callbacks
+from magicbus.plugins import SimplePlugin
 from runnable import Runnable
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
@@ -65,7 +65,6 @@ def _enable_kolibri_plugin(plugin_name: str, optional=False) -> bool:
 
     if plugin_name not in plugins_config.ACTIVE_PLUGINS:
         logging.info(f"Enabling plugin {plugin_name}")
-        registered_plugins.register_plugins([plugin_name])
         enable_plugin(plugin_name)
 
     return True
@@ -199,6 +198,20 @@ configureWebview(
 
 loadUrl = Runnable(PythonActivity.mWebView.loadUrl)
 
+
+class AppPlugin(SimplePlugin):
+    def __init__(self, bus):
+        self.bus = bus
+        self.bus.subscribe("SERVING", self.SERVING)
+
+    def SERVING(self, port):
+        start_url = (
+            "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+        )
+        loadUrl(start_url)
+        start_service("workers")
+
+
 logging.info("Initializing Kolibri and running any upgrade routines")
 
 loadUrl("file:///android_asset/_load.html")
@@ -211,12 +224,6 @@ for plugin_name in REQUIRED_PLUGINS:
 
 for plugin_name in OPTIONAL_PLUGINS:
     _enable_kolibri_plugin(plugin_name, optional=True)
-
-# Ensure that the pidfile is removed on startup
-try:
-    os.unlink(PID_FILE)
-except FileNotFoundError:
-    pass
 
 
 def start_kolibri_with_usb():
@@ -241,21 +248,30 @@ def start_kolibri():
     # we need to initialize Kolibri to allow us to access the app key
     initialize()
 
+    interface.register(share_file=share_by_intent)
+
     # start kolibri server
-    logging.info("Starting kolibri server via Android service...")
-    start_service("server")
+    logging.info("Starting kolibri server.")
 
-    # Tie up this thread until the server is running
-    wait_for_status(STATUS_RUNNING, timeout=120)
-
-    _, port, _, _ = _read_pid_file(PID_FILE)
-
-    start_url = (
-        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    kolibri_bus = BaseKolibriProcessBus()
+    # Setup zeroconf plugin
+    zeroconf_plugin = ZeroConfPlugin(kolibri_bus, kolibri_bus.port)
+    zeroconf_plugin.subscribe()
+    kolibri_server = KolibriServerPlugin(
+        kolibri_bus,
+        kolibri_bus.port,
     )
-    loadUrl(start_url)
 
-    start_service("remoteshell")
+    alt_port_server = ZipContentServerPlugin(
+        kolibri_bus,
+        kolibri_bus.zip_port,
+    )
+    # Subscribe these servers
+    kolibri_server.subscribe()
+    alt_port_server.subscribe()
+    app_plugin = AppPlugin(kolibri_bus)
+    app_plugin.subscribe()
+    kolibri_bus.run()
 
 
 while True:

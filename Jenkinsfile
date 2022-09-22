@@ -19,7 +19,8 @@ pipeline {
     environment {
         // URL for the Kolibri wheel to include.
         // FIXME: It would be nice to cache this somehow.
-        KOLIBRI_WHL_URL = 'https://github.com/learningequality/kolibri/releases/download/v0.15.1/kolibri-0.15.1-py2.py3-none-any.whl'
+        // FIXME: Go back to use an official release once that happens on GitHub for 0.16.
+        KOLIBRI_WHL_URL = 'https://buildkite.com/organizations/learningequality/pipelines/kolibri-python-package/builds/6198/jobs/0182fefa-da30-4683-a144-e7a7c0d3067c/artifacts/0182ff0f-a9e4-4384-bf26-d941243db21c'
     }
 
 
