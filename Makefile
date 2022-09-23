@@ -11,13 +11,6 @@ ARCH_OPTIONS := $(foreach arch,$(ARCHES),--arch=$(arch))
 
 OSNAME := $(shell uname -s)
 
-# Usually, P4A prepends "ccache" to CC and CXX. However, this causes certain
-# builds to behave unexpectedly, such as inside the zstandard recipe. Instead,
-# we will add /usr/lib/ccache to $PATH so ccache will be used automatically,
-# and set USE_CCACHE=0 so P4A will use compiler commands as usual.
-export USE_CCACHE := 0
-export PATH := /usr/lib/ccache:$(PATH)
-
 ifeq ($(OSNAME), Darwin)
 	PLATFORM := macosx
 else
