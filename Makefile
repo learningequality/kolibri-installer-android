@@ -18,7 +18,7 @@ else
 endif
 
 ANDROID_API := 30
-ANDROIDNDKVER := 21.4.7075529
+ANDROIDNDKVER := 23.2.8568313
 
 SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
 
@@ -165,7 +165,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	@echo "--- :android: Build APK"
 	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION)-.apk dist/kolibri-release-$(APK_VERSION).apk
+	mv kolibri-release-$(APK_VERSION).apk dist/kolibri-release-$(APK_VERSION).apk
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
@@ -174,7 +174,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collect
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-debug-$(APK_VERSION)-.apk dist/kolibri-debug-$(APK_VERSION).apk
+	mv kolibri-debug-$(APK_VERSION).apk dist/kolibri-debug-$(APK_VERSION).apk
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
@@ -187,7 +187,7 @@ kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	@echo "--- :android: Build AAB"
 	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION)-.aab dist/kolibri-release-$(APK_VERSION).aab
+	mv kolibri-release-$(APK_VERSION).aab dist/kolibri-release-$(APK_VERSION).aab
 
 # DOCKER BUILD
 
