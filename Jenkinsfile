@@ -34,10 +34,9 @@ pipeline {
         stage('Distro') {
             steps {
                 // p4a's cache invalidation has tons of bugs. Clean the
-                // kolibri distribution to ensure we get all the current
-                // code copied into it. This may need to be extended to
-                // include builds so that all that's left is the
-                // download cache.
+                // builds and distributions to ensure we get all the
+                // current code copied into it.
+                sh 'p4a clean builds'
                 sh 'p4a clean dists'
                 sh 'make p4a_android_distro'
             }
