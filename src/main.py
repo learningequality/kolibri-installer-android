@@ -3,6 +3,7 @@ import logging
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
+from android.activity import register_activity_lifecycle_callbacks
 from android_utils import choose_endless_key_uris
 from android_utils import get_endless_key_uris
 from android_utils import has_any_external_storage_device
@@ -24,7 +25,6 @@ from kolibri.utils.server import BaseKolibriProcessBus
 from kolibri.utils.server import KolibriServerPlugin
 from kolibri.utils.server import ZeroConfPlugin
 from kolibri.utils.server import ZipContentServerPlugin
-from lifecycle import register_activity_lifecycle_callbacks
 from magicbus.plugins import SimplePlugin
 from runnable import Runnable
 
