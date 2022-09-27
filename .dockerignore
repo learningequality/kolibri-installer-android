@@ -1,7 +1,37 @@
+# Unneeded in Docker build context
 .gitignore
 .buildozer
-src/kolibri
-dist/android
 README.md
+
+# Downloaded and unpacked assets
+_explore/
+apps-bundle.zip
+collections.zip
+assets/loadingScreen/
+src/apps-bundle/
+src/collections/
+src/kolibri/
+whl/
+
+
+# File format for signing key
+*.jks
+
+# output folder
+dist/
+
+__pycache__
+*.pyc
+build_docker
+bin/
+build.log
+tmphome/
+android_root/
+
+# Typical virtualenv directories
+tmpenv/
 venv/
 .venv/
+
+*.apk
+.env
