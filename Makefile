@@ -18,7 +18,7 @@ else
 endif
 
 ANDROID_API := 30
-ANDROIDNDKVER := 21.4.7075529
+ANDROIDNDKVER := 23.2.8568313
 
 SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
 
@@ -61,16 +61,12 @@ clean-whl:
 
 .PHONY: get-whl
 get-whl: clean-whl
-# The eval and shell commands here are evaluated when the recipe is parsed, so we put the cleanup
-# into a prerequisite make step, in order to ensure they happen prior to the download.
-	$(eval DLFILE = $(shell wget --content-disposition -P whl/ "${whl}" 2>&1 | grep "Saving to: " | sed 's/Saving to: ‘//' | sed 's/’//'))
-	$(eval WHLFILE = $(shell echo "${DLFILE}" | sed "s/\?.*//"))
-	[ "${DLFILE}" = "${WHLFILE}" ] || mv "${DLFILE}" "${WHLFILE}"
+	wget -O whl/kolibri.whl "${whl}"
 
 # Extract the whl file
 src/kolibri: clean
 	rm -r src/kolibri 2> /dev/null || true
-	unzip -qo "whl/kolibri-*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
+	unzip -qo whl/kolibri.whl "kolibri/*" -x "kolibri/dist/py2only*" -d src/
 	# Cleanup:
 	./scripts/cleanup-unused-locales.py -l \
 	src/kolibri/locale \
@@ -165,7 +161,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	@echo "--- :android: Build APK"
 	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION)-.apk dist/kolibri-release-$(APK_VERSION).apk
+	mv kolibri-release-$(APK_VERSION).apk dist/kolibri-release-$(APK_VERSION).apk
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
@@ -174,7 +170,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collect
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-debug-$(APK_VERSION)-.apk dist/kolibri-debug-$(APK_VERSION).apk
+	mv kolibri-debug-$(APK_VERSION).apk dist/kolibri-debug-$(APK_VERSION).apk
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
@@ -187,7 +183,7 @@ kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	@echo "--- :android: Build AAB"
 	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION)-.aab dist/kolibri-release-$(APK_VERSION).aab
+	mv kolibri-release-$(APK_VERSION).aab dist/kolibri-release-$(APK_VERSION).aab
 
 # DOCKER BUILD
 

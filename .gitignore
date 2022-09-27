@@ -1,7 +1,12 @@
-src/kolibri
-tmpenv
-whl/*
-assets/loadingScreen
+# Downloaded and unpacked assets
+_explore/
+apps-bundle.zip
+collections.zip
+assets/loadingScreen/
+src/apps-bundle/
+src/collections/
+src/kolibri/
+whl/
 
 # File format for signing key
 *.jks
@@ -18,6 +23,7 @@ tmphome/
 android_root/
 
 # Typical virtualenv directories
+tmpenv/
 venv/
 .venv/
 
