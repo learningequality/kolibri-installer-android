@@ -61,16 +61,12 @@ clean-whl:
 
 .PHONY: get-whl
 get-whl: clean-whl
-# The eval and shell commands here are evaluated when the recipe is parsed, so we put the cleanup
-# into a prerequisite make step, in order to ensure they happen prior to the download.
-	$(eval DLFILE = $(shell wget --content-disposition -P whl/ "${whl}" 2>&1 | grep "Saving to: " | sed 's/Saving to: ‘//' | sed 's/’//'))
-	$(eval WHLFILE = $(shell echo "${DLFILE}" | sed "s/\?.*//"))
-	[ "${DLFILE}" = "${WHLFILE}" ] || mv "${DLFILE}" "${WHLFILE}"
+	wget -O whl/kolibri.whl "${whl}"
 
 # Extract the whl file
 src/kolibri: clean
 	rm -r src/kolibri 2> /dev/null || true
-	unzip -qo "whl/kolibri-*.whl" "kolibri/*" -x "kolibri/dist/py2only*" -d src/
+	unzip -qo whl/kolibri.whl "kolibri/*" -x "kolibri/dist/py2only*" -d src/
 	# Cleanup:
 	./scripts/cleanup-unused-locales.py -l \
 	src/kolibri/locale \
