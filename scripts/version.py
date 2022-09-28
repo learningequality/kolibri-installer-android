@@ -64,25 +64,21 @@ def apk_version():
 def build_number():
     """
     Returns the build number for the apk. This is the mechanism used to understand whether one
-    build is newer than another. Uses buildkite build number with time as local dev backup
+    build is newer than another. Uses jenkins build number with time as local dev backup
     """
 
-    # Patch, due to a build error.
-    # Envar was not being passed into the container this runs in, and the
-    # build submitted to the play store ended up using the dev build number.
-    # We can't go backwards. So we're adding to the one submitted at first.
-    build_base_number = 2008998000
+    # At one point a release was made from the PR job, which had a build
+    # number far ahead of the standard job.
+    build_base_number = 169
 
-    buildkite_build_number = os.getenv("BUILDKITE_BUILD_NUMBER")
-
-    if buildkite_build_number is not None:
-        build_number = build_base_number + 2 * int(buildkite_build_number)
-        return str(build_number)
-
-    alt_build_number = (
-        int(datetime.now().strftime("%y%m%d%H%M")) - build_base_number
-    ) * 2
-    return alt_build_number
+    jenkins_build_number = os.getenv("BUILD_NUMBER")
+    if jenkins_build_number:
+        build_number = build_base_number + int(jenkins_build_number)
+    else:
+        build_number = (
+            int(datetime.now().strftime("%y%m%d%H%M")) - build_base_number
+        ) * 2
+    return build_number
 
 
 if __name__ == "__main__":
