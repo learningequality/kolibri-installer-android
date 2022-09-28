@@ -46,7 +46,7 @@ needs-android-dirs:
 
 # Clear out apks
 clean:
-	- rm -rf dist/*.apk src/kolibri tmpenv
+	- rm -rf dist/*.apk dist/*.aab src/kolibri tmpenv
 
 deepclean: clean
 	$(PYTHON_FOR_ANDROID) clean_dists
