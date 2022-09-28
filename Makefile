@@ -148,7 +148,7 @@ p4a_android_distro: needs-android-dirs
 .PHONY: needs-version
 needs-version: src/kolibri
 	$(eval APK_VERSION ?= $(shell python3 scripts/version.py apk_version))
-	$(eval BUILD_NUMBER ?= $(shell python3 scripts/version.py build_number))
+	$(eval APK_BUILD_NUMBER ?= $(shell python3 scripts/version.py build_number))
 
 .PHONY: kolibri.apk
 # Build the signed version of the apk
@@ -159,7 +159,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build APK"
-	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
 	mkdir -p dist
 	mv kolibri-release-$(APK_VERSION).apk dist/kolibri-release-$(APK_VERSION).apk
 
@@ -168,7 +168,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
 kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
 	@echo "--- :android: Build APK (unsigned)"
-	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
 	mkdir -p dist
 	mv kolibri-debug-$(APK_VERSION).apk dist/kolibri-debug-$(APK_VERSION).apk
 
@@ -181,7 +181,7 @@ kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build AAB"
-	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
 	mkdir -p dist
 	mv kolibri-release-$(APK_VERSION).aab dist/kolibri-release-$(APK_VERSION).aab
 
