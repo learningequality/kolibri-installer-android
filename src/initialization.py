@@ -29,6 +29,15 @@ from android_whitenoise import monkeypatch_whitenoise  # noqa: E402
 
 monkeypatch_whitenoise()
 
+
+def set_content_fallback_dirs_env():
+    endless_key_uris = get_endless_key_uris()
+    if endless_key_uris is not None:
+        content_uri = DynamicWhiteNoise.encode_root(endless_key_uris["content"])
+        logging.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_uri)
+        os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_uri
+
+
 signing_org = get_signature_key_issuing_organization()
 if signing_org == "Learning Equality":
     runmode = "android-testing"
@@ -46,11 +55,7 @@ os.environ["LC_ALL"] = "en_US.UTF-8"
 
 os.environ["KOLIBRI_HOME"] = get_home_folder()
 
-endless_key_uris = get_endless_key_uris()
-if endless_key_uris is not None:
-    content_uri = DynamicWhiteNoise.encode_root(endless_key_uris["content"])
-    logging.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_uri)
-    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_uri
+set_content_fallback_dirs_env()
 
 os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
 os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_app_settings"

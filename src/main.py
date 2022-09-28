@@ -241,6 +241,7 @@ def start_kolibri_with_usb():
 
     provision_endless_key_database(key_uris)
     set_endless_key_uris(key_uris)
+    initialization.set_content_fallback_dirs_env()
     start_kolibri()
 
 
