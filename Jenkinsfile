@@ -50,6 +50,11 @@ pipeline {
         }
 
         stage('Release AAB') {
+            // Don't build the release AAB for PRs.
+            when {
+                expression { !params.ghprbPullId }
+            }
+
             steps {
                 withCredentials(
                     [[$class: 'VaultCertificateCredentialsBinding',
