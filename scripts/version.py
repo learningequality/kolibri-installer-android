@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from datetime import datetime
+import time
 
 
 def kolibri_version():
@@ -75,9 +75,7 @@ def build_number():
     if jenkins_build_number:
         build_number = build_base_number + int(jenkins_build_number)
     else:
-        build_number = (
-            int(datetime.now().strftime("%y%m%d%H%M")) - build_base_number
-        ) * 2
+        build_number = int(time.time())
     return build_number
 
 
