@@ -59,9 +59,10 @@ development environment inside a container.
 
 5. Build or download a Kolibri WHL file, and place it in the `whl/` directory.
 
-   To download a Kolibri WHL file, you can use `make whl=<URL>` from the
-   command line. It will download it and put it in the correct
-   directory.
+   To download a Kolibri WHL file, you can use `make get-whl
+   whl=<URL>` from the command line. It will download it and put it in
+   the correct directory. You can check the Jenkinsfile for the URL
+   currently used by our continuous integration builds.
 
 6. By default the APK will be built for most architectures supported by
    Python for Android. To build for a smaller set of architectures, set
