@@ -1,10 +1,12 @@
 import logging
 import time
+from urllib.parse import urlparse
 
 from jnius import autoclass
 
 from ..android_utils import choose_endless_key_uris
 from ..android_utils import get_endless_key_uris
+from ..android_utils import get_preferences
 from ..android_utils import has_any_external_storage_device
 from ..android_utils import PermissionsCancelledError
 from ..android_utils import PermissionsWrongFolderError
@@ -30,6 +32,11 @@ def configure_webview(*args):
 @Runnable
 def load_url_in_webview(url):
     PythonActivity.mWebView.loadUrl(url)
+
+
+@Runnable
+def get_current_url():
+    return PythonActivity.mWebView.getUrl()
 
 
 @Runnable
@@ -92,6 +99,9 @@ class MainActivity(BaseActivity):
 
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
+
+        self.save_last_kolibri_path()
+
         if self._kolibri_bus is not None:
             self._kolibri_bus.transition("STOP")
 
@@ -111,6 +121,28 @@ class MainActivity(BaseActivity):
                 # Wait a bit after each main function call
                 time.sleep(0.5)
             time.sleep(0.05)
+
+    def read_last_kolibri_path(self):
+        preferences = get_preferences()
+        return preferences.getString("last_kolibri_path", None)
+
+    def save_last_kolibri_path(self):
+        if self._kolibri_bus is None:
+            return None
+
+        current_url = get_current_url()
+
+        if self._kolibri_bus.is_kolibri_url(current_url):
+            last_kolibri_path = (
+                urlparse(current_url)._replace(scheme="", netloc="").geturl()
+            )
+        else:
+            last_kolibri_path = None
+
+        logging.info(f"Saving last Kolibri path '{last_kolibri_path}'")
+        editor = get_preferences().edit()
+        editor.putString("last_kolibri_path", last_kolibri_path)
+        editor.commit()
 
     def load_url(self, url):
         load_url_in_webview(url)
