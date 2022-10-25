@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "213574660451",
+    "project_id": "endless-key",
+    "storage_bucket": "endless-key.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213574660451:android:5472768c88d6dca40fa356",
+        "android_client_info": {
+          "package_name": "org.endlessos.Key"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "213574660451-1jtfs0i93q7cqb2c4rq1tdndm1quipbc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf4cwM1oJ_cUcBQ1JsQNiQJQ3h-CpxFgI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "213574660451-1jtfs0i93q7cqb2c4rq1tdndm1quipbc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

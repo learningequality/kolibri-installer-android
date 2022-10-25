@@ -6,7 +6,7 @@
 --local-recipes "p4a-recipes"
 --orientation sensor
 --requirements python3,android,pyjnius,genericndkbuild,sqlite3,cryptography,twisted,attrs,bcrypt,service_identity,pyasn1,pyasn1_modules,pyopenssl,openssl,six,liblzma,zstandard,beautifulsoup4==4.10.0,zimply_core,kolibri_explore_plugin~=3.0,kolibri_zim_plugin
---android-api 30
+--android-api 31
 --minsdk 24
 --allow-minsdk-ndkapi-mismatch
 --permission ACCESS_NETWORK_STATE
@@ -26,3 +26,7 @@
 --add-source src/java/
 --activity-meta-data WindowManagerPreference:FreeformWindowSize=maximize
 --activity-meta-data WindowManagerPreference:FreeformWindowOrientation=landscape
+--enable-androidx
+--enable-google-services
+--add-gradle-plugin com.google.firebase.crashlytics:com.google.firebase:firebase-crashlytics-gradle:2.9.2
+--depend com.google.firebase:firebase-crashlytics:18.3.1

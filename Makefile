@@ -17,7 +17,7 @@ else
 	PLATFORM := linux
 endif
 
-ANDROID_API := 30
+ANDROID_API := 31
 ANDROIDNDKVER := 23.2.8568313
 
 SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
