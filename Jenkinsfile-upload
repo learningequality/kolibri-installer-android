@@ -1,0 +1,108 @@
+// Jenkins upload pipeline
+//
+// https://www.jenkins.io/doc/book/pipeline/
+
+pipeline {
+    // Any agent is fine as all the work happens in plugins.
+    agent any
+
+    parameters {
+        text(
+            name: 'RELEASE_NOTES',
+            description: '''\
+<p>Release notes in JSON. The expected format is
+an array of objects with <code>language</code> and <code>text</code>
+properties. For example:</p>
+
+<pre>
+[
+  {"language": "en-US", "text": "Fixed a problem"},
+  {"language": "de-DE", "text": "Ein Problem wurde behoben"}
+]
+</pre>''',
+        )
+}
+
+    stages {
+        stage('Copy AAB') {
+            steps {
+                copyArtifacts(
+                    projectName: 'kolibri-installer-android',
+                    selector: lastSuccessful(),
+                    filter: 'dist/kolibri-release-*.aab, dist/version.json',
+                    fingerprintArtifacts: true,
+                )
+            }
+        }
+
+        stage('Upload') {
+            steps {
+                // A bit of pre-processing is needed, so we need to drop
+                // into scripted pipeline mode.
+                script {
+                    // Make sure release notes have been provided.
+                    if (!params.RELEASE_NOTES) {
+                        error('RELEASE_NOTES parameter not set')
+                    }
+
+                    // Make sure there's only a single AAB file.
+                    def pattern = 'kolibri-release-*.aab'
+                    def numFiles = findFiles(glob: pattern).size()
+                    if (files.size() != 1) {
+                        error("${pattern} matched ${numFiles} files")
+                    }
+
+                    def releaseNotes = readJSON(text: params.RELEASE_NOTES)
+                    androidApkUpload(
+                        googleCredentialsId: 'google-play-account',
+                        filesPattern: pattern,
+                        trackName: 'internal',
+                        recentChangeList: releaseNotes,
+                        rolloutPercentage: '100',
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def version = readJSON(file: 'version.json')
+                buildDescription("${version.versionCode} ${version.versionName}")
+            }
+        }
+
+        success {
+            script {
+                def files = findFiles(glob: 'kolibri-release-*.aab')
+                def aab = files[0].name
+                def version = readJSON(file: 'version.json')
+
+                emailext (
+                    to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
+                    replyTo: 'apps@endlessos.org',
+                    subject: "Uploaded org.endlessos.Key " +
+                        "${version.versionCode} to internal testing",
+                    body: """\
+Uploaded org.endlessos.Key ${version.versionCode} ${version.versionName} from
+${aab} to internal testing".
+
+See Jenkins job $PROJECT_NAME build $BUILD_NUMBER for details.
+
+$BUILD_URL
+"""
+                )
+            }
+        }
+
+        failure {
+            emailext (
+                to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
+                replyTo: 'apps@endlessos.org',
+                subject: '$DEFAULT_SUBJECT',
+                body: '$DEFAULT_CONTENT',
+            )
+        }
+    }
+}
