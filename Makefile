@@ -46,7 +46,7 @@ needs-android-dirs:
 
 # Clear out apks
 clean:
-	- rm -rf dist/*.apk dist/*.aab src/kolibri tmpenv
+	- rm -rf dist/*.apk dist/*.aab dist/version.json src/kolibri tmpenv
 
 deepclean: clean
 	$(PYTHON_FOR_ANDROID) clean_dists
@@ -147,10 +147,22 @@ needs-version: src/kolibri
 	$(eval APK_VERSION ?= $(shell python3 scripts/version.py apk_version))
 	$(eval APK_BUILD_NUMBER ?= $(shell python3 scripts/version.py build_number))
 
+dist/version.json: needs-version
+	mkdir -p dist
+	echo '{"versionCode": "$(APK_BUILD_NUMBER)", "versionName": "$(APK_VERSION)"}' > $@
+
+DIST_DEPS = \
+	p4a_android_distro \
+	src/kolibri \
+	src/apps-bundle \
+	src/collections \
+	assets/loadingScreen \
+	needs-version \
+	dist/version.json
+
 .PHONY: kolibri.apk
 # Build the signed version of the apk
-# For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
+kolibri.apk: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
@@ -162,8 +174,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
-# For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
+kolibri.apk.unsigned: $(DIST_DEPS)
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
 	mkdir -p dist
@@ -171,8 +182,7 @@ kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collect
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
-# For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
-kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
+kolibri.aab: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
