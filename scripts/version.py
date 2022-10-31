@@ -43,22 +43,13 @@ def git_tag():
     return p.communicate()[0].rstrip()
 
 
-def build_type():
-    key_alias = os.getenv("P4A_RELEASE_KEYALIAS", "unknown")
-    if key_alias == "LE_DEV_KEY":
-        return "dev"
-    if key_alias == "LE_RELEASE_KEY":
-        return "official"
-    return key_alias
-
-
 def apk_version():
     """
     Returns the version to be used for the Kolibri Android app.
     Schema: [kolibri version]-[android installer version or githash]-[build signature type]
     """
     android_version_indicator = git_tag() or commit_hash()
-    return "{}-{}-{}".format(kolibri_version(), android_version_indicator, build_type())
+    return "{}-{}".format(kolibri_version(), android_version_indicator)
 
 
 def build_number():
