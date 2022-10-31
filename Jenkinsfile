@@ -22,6 +22,10 @@ pipeline {
 
     options {
         ansiColor('xterm')
+
+        // This is needed to allow the upload job to copy the built
+        // artifacts.
+        copyArtifactPermission('kolibri-installer-android-upload')
     }
 
     stages {

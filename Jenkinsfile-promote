@@ -1,0 +1,67 @@
+// Jenkins promote pipeline
+//
+// https://www.jenkins.io/doc/book/pipeline/
+
+pipeline {
+    // Any agent is fine as all the work happens on the controller.
+    agent any
+
+    parameters {
+        string(
+            name: 'VERSION',
+            description: 'Version code to promote',
+            trim: true,
+        )
+        choice(
+            name: 'TRACK',
+            description: 'Release track to promote to',
+            choices: ['alpha', 'beta', 'production'],
+        )
+    }
+
+    stages {
+        stage('Release') {
+            androidApkMove(
+                googleCredentialsId: 'google-play-account',
+                applicationId: 'org.endlessos.Key',
+                // Let Google Play use versionName for releaseName
+                releaseName: '',
+                rolloutPercentage: '100',
+                trackName: params.TRACK,
+                // Use an already uploaded version
+                fromVersionCode: true,
+                versionCodes: params.VERSION,
+            )
+        }
+    }
+
+    post {
+        always {
+            buildDescription("${params.VERSION} ${params.TRACK}")
+        }
+
+        success {
+            emailext (
+                to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
+                replyTo: 'apps@endlessos.org',
+                subject: "Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}",
+                body: """\
+Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}".
+
+See Jenkins job $PROJECT_NAME build $BUILD_NUMBER for details.
+
+$BUILD_URL
+"""
+            )
+        }
+
+        failure {
+            emailext (
+                to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
+                replyTo: 'apps@endlessos.org',
+                subject: '$DEFAULT_SUBJECT',
+                body: '$DEFAULT_CONTENT',
+            )
+        }
+    }
+}
