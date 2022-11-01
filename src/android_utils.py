@@ -64,7 +64,8 @@ USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
 _choose_directory_intent = None
-
+_notification_builder = None
+_notification_intent = None
 
 # Path.is_relative_to only on python 3.9+.
 if not hasattr(Path, "is_relative_to"):
@@ -655,6 +656,8 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
 
 
 def make_service_foreground(title, message):
+    global _notification_builder
+
     service = get_service()
     Drawable = autoclass("{}.R$drawable".format(service.getPackageName()))
     app_context = service.getApplication().getApplicationContext()
@@ -672,26 +675,28 @@ def make_service_foreground(title, message):
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notification_service.createNotificationChannel(app_channel)
-        notification_builder = NotificationBuilder(app_context, channel_id)
+        _notification_builder = NotificationBuilder(app_context, channel_id)
     else:
-        notification_builder = NotificationBuilder(app_context)
+        _notification_builder = NotificationBuilder(app_context)
 
-    notification_builder.setContentTitle(AndroidString(title))
-    notification_builder.setContentText(AndroidString(message))
-    notification_intent = Intent(app_context, PythonActivity)
-    notification_intent.setFlags(
+    _notification_builder.setContentTitle(AndroidString(title))
+    _notification_builder.setContentText(AndroidString(message))
+    _notification_intent = Intent(app_context, PythonActivity)
+    _notification_intent.setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
         | Intent.FLAG_ACTIVITY_SINGLE_TOP
         | Intent.FLAG_ACTIVITY_NEW_TASK
     )
-    notification_intent.setAction(Intent.ACTION_MAIN)
-    notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
-    intent = PendingIntent.getActivity(service, 0, notification_intent, 0)
-    notification_builder.setContentIntent(intent)
-    notification_builder.setSmallIcon(Drawable.icon)
-    notification_builder.setAutoCancel(True)
-    new_notification = notification_builder.getNotification()
+    _notification_intent.setAction(Intent.ACTION_MAIN)
+    _notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
+    intent = PendingIntent.getActivity(service, 0, _notification_intent, 0)
+    _notification_builder.setContentIntent(intent)
+    _notification_builder.setSmallIcon(Drawable.icon)
+    _notification_builder.setAutoCancel(True)
+    new_notification = _notification_builder.getNotification()
     service.startForeground(1, new_notification)
+    _notification_builder = None
+    _notification_intent = None
 
 
 def get_signature_key_issuer():
