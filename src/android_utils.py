@@ -61,6 +61,11 @@ MY_FILES_UUID = "0000000000000000000000000000CAFEF00D2019"
 USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 
 
+# Globals to keep references to Java objects
+# See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
+_choose_directory_intent = None
+
+
 # Path.is_relative_to only on python 3.9+.
 if not hasattr(Path, "is_relative_to"):
 
@@ -550,6 +555,8 @@ def create_open_kolibri_data_intent(context):
 
 def choose_directory(activity=None, msg=None, timeout=None):
     """Run the file picker to choose a directory"""
+    global _choose_directory_intent
+
     if activity is None:
         activity = get_activity()
     content_resolver = activity.getContentResolver()
@@ -584,16 +591,16 @@ def choose_directory(activity=None, msg=None, timeout=None):
 
         data_queue.put(uri_str, timeout=timeout)
 
-    intent = create_open_kolibri_data_intent(activity)
-    logger.info("Open directory intent: %s", intent.toString())
-    extras = intent.getExtras()
+    _choose_directory_intent = create_open_kolibri_data_intent(activity)
+    logger.info("Open directory intent: %s", _choose_directory_intent.toString())
+    extras = _choose_directory_intent.getExtras()
     if extras:
         logger.info("Open directory intent extras: %s", extras.toString())
 
     bind(on_activity_result=on_activity_result)
     try:
         activity.startActivityForResult(
-            intent,
+            _choose_directory_intent,
             OPEN_DIRECTORY_REQUEST_CODE,
         )
         if msg:
@@ -601,6 +608,7 @@ def choose_directory(activity=None, msg=None, timeout=None):
         return data_queue.get(timeout=timeout)
     finally:
         unbind(on_activity_result=on_activity_result)
+        _choose_directory_intent = None
 
 
 def show_toast(context, msg, duration):
