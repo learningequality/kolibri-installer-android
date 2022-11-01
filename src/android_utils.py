@@ -616,8 +616,7 @@ def show_toast(context, msg, duration):
     """Helper to create and show a Toast message"""
 
     def func():
-        toast = Toast.makeText(context, AndroidString(msg), duration)
-        toast.show()
+        Toast.makeText(context, AndroidString(msg), duration).show()
 
     runnable = Runnable(func)
     runnable()
