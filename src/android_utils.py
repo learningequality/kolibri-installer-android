@@ -658,6 +658,7 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
 
 def make_service_foreground(title, message):
     global _notification_builder
+    global _notification_intent
 
     service = get_service()
     Drawable = autoclass("{}.R$drawable".format(service.getPackageName()))
