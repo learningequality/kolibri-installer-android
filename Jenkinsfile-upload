@@ -46,9 +46,9 @@ properties. For example:</p>
                     }
 
                     // Make sure there's only a single AAB file.
-                    def pattern = 'kolibri-release-*.aab'
+                    def pattern = 'dist/kolibri-release-*.aab'
                     def numFiles = findFiles(glob: pattern).size()
-                    if (files.size() != 1) {
+                    if (numFiles != 1) {
                         error("${pattern} matched ${numFiles} files")
                     }
 
@@ -68,16 +68,16 @@ properties. For example:</p>
     post {
         always {
             script {
-                def version = readJSON(file: 'version.json')
+                def version = readJSON(file: 'dist/version.json')
                 buildDescription("${version.versionCode} ${version.versionName}")
             }
         }
 
         success {
             script {
-                def files = findFiles(glob: 'kolibri-release-*.aab')
+                def files = findFiles(glob: 'dist/kolibri-release-*.aab')
                 def aab = files[0].name
-                def version = readJSON(file: 'version.json')
+                def version = readJSON(file: 'dist/version.json')
 
                 emailext (
                     to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
