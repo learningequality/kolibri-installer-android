@@ -91,9 +91,9 @@ properties. For example:</p>
 Uploaded org.endlessos.Key ${version.versionCode} ${version.versionName} from
 ${aab} to internal testing".
 
-See Jenkins job $PROJECT_NAME build $BUILD_NUMBER for details.
+See Jenkins job \$PROJECT_NAME build \$BUILD_NUMBER for details.
 
-$BUILD_URL
+\$BUILD_URL
 """
                 )
             }

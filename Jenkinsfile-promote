@@ -48,9 +48,9 @@ pipeline {
                 body: """\
 Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}".
 
-See Jenkins job $PROJECT_NAME build $BUILD_NUMBER for details.
+See Jenkins job \$PROJECT_NAME build \$BUILD_NUMBER for details.
 
-$BUILD_URL
+\$BUILD_URL
 """
             )
         }
