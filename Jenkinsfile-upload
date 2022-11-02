@@ -26,6 +26,9 @@ properties. For example:</p>
     stages {
         stage('Copy AAB') {
             steps {
+                // Wipe the dist directory before copying to ensure
+                // there are no stale files.
+                sh 'rm -rf dist'
                 copyArtifacts(
                     projectName: 'kolibri-installer-android',
                     selector: lastSuccessful(),
