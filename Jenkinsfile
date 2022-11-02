@@ -49,7 +49,7 @@ pipeline {
         stage('Debug APK') {
             steps {
                 sh 'make kolibri.apk.unsigned'
-                archiveArtifacts artifacts: 'dist/*.apk'
+                archiveArtifacts artifacts: 'dist/*.apk, dist/version.json'
             }
         }
 
