@@ -26,6 +26,7 @@
 --add-source src/java/
 --activity-meta-data WindowManagerPreference:FreeformWindowSize=maximize
 --activity-meta-data WindowManagerPreference:FreeformWindowOrientation=landscape
+--activity-meta-data WindowManagerPreference:SuppressWindowControlNavigationButton=true
 --enable-androidx
 --enable-google-services
 --add-gradle-plugin com.google.firebase.crashlytics:com.google.firebase:firebase-crashlytics-gradle:2.9.2
