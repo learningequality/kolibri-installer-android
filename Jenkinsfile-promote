@@ -48,7 +48,7 @@ pipeline {
                 replyTo: 'apps@endlessos.org',
                 subject: "Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}",
                 body: """\
-Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}".
+Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}.
 
 See Jenkins job \$PROJECT_NAME build \$BUILD_NUMBER for details.
 
