@@ -21,17 +21,19 @@ pipeline {
 
     stages {
         stage('Release') {
-            androidApkMove(
-                googleCredentialsId: 'google-play-account',
-                applicationId: 'org.endlessos.Key',
-                // Let Google Play use versionName for releaseName
-                releaseName: '',
-                rolloutPercentage: '100',
-                trackName: params.TRACK,
-                // Use an already uploaded version
-                fromVersionCode: true,
-                versionCodes: params.VERSION,
-            )
+            steps {
+                androidApkMove(
+                    googleCredentialsId: 'google-play-account',
+                    applicationId: 'org.endlessos.Key',
+                    // Let Google Play use versionName for releaseName
+                    releaseName: '',
+                    rolloutPercentage: '100',
+                    trackName: params.TRACK,
+                    // Use an already uploaded version
+                    fromVersionCode: true,
+                    versionCodes: params.VERSION,
+                )
+            }
         }
     }
 
