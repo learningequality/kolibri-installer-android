@@ -41,7 +41,6 @@ NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
-Settings = autoclass("android.provider.Settings")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
@@ -60,6 +59,13 @@ MY_FILES_UUID = "0000000000000000000000000000CAFEF00D2019"
 
 USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 
+
+# Globals to keep references to Java objects
+# See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
+_choose_directory_intent = None
+_notification_builder = None
+_notification_intent = None
+_send_intent = None
 
 # Path.is_relative_to only on python 3.9+.
 if not hasattr(Path, "is_relative_to"):
@@ -550,6 +556,8 @@ def create_open_kolibri_data_intent(context):
 
 def choose_directory(activity=None, msg=None, timeout=None):
     """Run the file picker to choose a directory"""
+    global _choose_directory_intent
+
     if activity is None:
         activity = get_activity()
     content_resolver = activity.getContentResolver()
@@ -584,16 +592,16 @@ def choose_directory(activity=None, msg=None, timeout=None):
 
         data_queue.put(uri_str, timeout=timeout)
 
-    intent = create_open_kolibri_data_intent(activity)
-    logger.info("Open directory intent: %s", intent.toString())
-    extras = intent.getExtras()
+    _choose_directory_intent = create_open_kolibri_data_intent(activity)
+    logger.info("Open directory intent: %s", _choose_directory_intent.toString())
+    extras = _choose_directory_intent.getExtras()
     if extras:
         logger.info("Open directory intent extras: %s", extras.toString())
 
     bind(on_activity_result=on_activity_result)
     try:
         activity.startActivityForResult(
-            intent,
+            _choose_directory_intent,
             OPEN_DIRECTORY_REQUEST_CODE,
         )
         if msg:
@@ -601,14 +609,14 @@ def choose_directory(activity=None, msg=None, timeout=None):
         return data_queue.get(timeout=timeout)
     finally:
         unbind(on_activity_result=on_activity_result)
+        _choose_directory_intent = None
 
 
 def show_toast(context, msg, duration):
     """Helper to create and show a Toast message"""
 
     def func():
-        toast = Toast.makeText(context, AndroidString(msg), duration)
-        toast.show()
+        Toast.makeText(context, AndroidString(msg), duration).show()
 
     runnable = Runnable(func)
     runnable()
@@ -619,13 +627,14 @@ def send_whatsapp_message(msg):
 
 
 def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=None):
+    global _send_intent
 
     assert (
         path or message or filename
     ), "Must provide either a path, a filename, or a msg to share"
 
-    sendIntent = Intent()
-    sendIntent.setAction(Intent.ACTION_SEND)
+    _send_intent = Intent()
+    _send_intent.setAction(Intent.ACTION_SEND)
     if path:
         uri = FileProvider.getUriForFile(
             Context.getApplicationContext(),
@@ -633,20 +642,24 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
             File(path),
         )
         parcelable = cast("android.os.Parcelable", uri)
-        sendIntent.putExtra(Intent.EXTRA_STREAM, parcelable)
-        sendIntent.setType(AndroidString(mimetype or "*/*"))
-        sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        _send_intent.putExtra(Intent.EXTRA_STREAM, parcelable)
+        _send_intent.setType(AndroidString(mimetype or "*/*"))
+        _send_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     if message:
         if not path:
-            sendIntent.setType(AndroidString(mimetype or "text/plain"))
-        sendIntent.putExtra(Intent.EXTRA_TEXT, AndroidString(message))
+            _send_intent.setType(AndroidString(mimetype or "text/plain"))
+        _send_intent.putExtra(Intent.EXTRA_TEXT, AndroidString(message))
     if app:
-        sendIntent.setPackage(AndroidString(app))
-    sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    get_activity().startActivity(sendIntent)
+        _send_intent.setPackage(AndroidString(app))
+    _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    get_activity().startActivity(_send_intent)
+    _send_intent = None
 
 
 def make_service_foreground(title, message):
+    global _notification_builder
+    global _notification_intent
+
     service = get_service()
     Drawable = autoclass("{}.R$drawable".format(service.getPackageName()))
     app_context = service.getApplication().getApplicationContext()
@@ -664,26 +677,28 @@ def make_service_foreground(title, message):
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notification_service.createNotificationChannel(app_channel)
-        notification_builder = NotificationBuilder(app_context, channel_id)
+        _notification_builder = NotificationBuilder(app_context, channel_id)
     else:
-        notification_builder = NotificationBuilder(app_context)
+        _notification_builder = NotificationBuilder(app_context)
 
-    notification_builder.setContentTitle(AndroidString(title))
-    notification_builder.setContentText(AndroidString(message))
-    notification_intent = Intent(app_context, PythonActivity)
-    notification_intent.setFlags(
+    _notification_builder.setContentTitle(AndroidString(title))
+    _notification_builder.setContentText(AndroidString(message))
+    _notification_intent = Intent(app_context, PythonActivity)
+    _notification_intent.setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
         | Intent.FLAG_ACTIVITY_SINGLE_TOP
         | Intent.FLAG_ACTIVITY_NEW_TASK
     )
-    notification_intent.setAction(Intent.ACTION_MAIN)
-    notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
-    intent = PendingIntent.getActivity(service, 0, notification_intent, 0)
-    notification_builder.setContentIntent(intent)
-    notification_builder.setSmallIcon(Drawable.icon)
-    notification_builder.setAutoCancel(True)
-    new_notification = notification_builder.getNotification()
+    _notification_intent.setAction(Intent.ACTION_MAIN)
+    _notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
+    intent = PendingIntent.getActivity(service, 0, _notification_intent, 0)
+    _notification_builder.setContentIntent(intent)
+    _notification_builder.setSmallIcon(Drawable.icon)
+    _notification_builder.setAutoCancel(True)
+    new_notification = _notification_builder.getNotification()
     service.startForeground(1, new_notification)
+    _notification_builder = None
+    _notification_intent = None
 
 
 def get_signature_key_issuer():
