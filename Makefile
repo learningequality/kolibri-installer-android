@@ -107,6 +107,8 @@ src/kolibri: clean
 	# End of cleanup.
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
+	# Apply kolibri patches
+	patch -d src/ -p1 < patches/0001-Add-track-progress-information-to-channelimport.patch
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:

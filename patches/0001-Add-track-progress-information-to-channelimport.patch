@@ -1,0 +1,24 @@
+From 94823dd69105a108741830cc0225fa0517e20b8a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Manuel=20Qui=C3=B1ones?= <manuel.por.aca@gmail.com>
+Date: Fri, 11 Nov 2022 18:58:43 -0300
+Subject: [PATCH] Add track progress information to channelimport
+
+---
+ kolibri/core/content/tasks.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kolibri/core/content/tasks.py b/kolibri/core/content/tasks.py
+index fc1605435a..edba2f1b93 100644
+--- a/kolibri/core/content/tasks.py
++++ b/kolibri/core/content/tasks.py
+@@ -152,6 +152,7 @@ class RemoteChannelImportValidator(RemoteImportMixin, ChannelValidator):
+ 
+ @register_task(
+     validator=RemoteChannelImportValidator,
++    track_progress=True,
+     cancellable=True,
+     permission_classes=[CanManageContent],
+     priority=Priority.HIGH,
+-- 
+2.30.2
+
