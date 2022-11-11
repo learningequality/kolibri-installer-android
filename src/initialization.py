@@ -47,6 +47,9 @@ elif signing_org == "Google Inc.":
     runmode = ""  # Play Store!
 else:
     runmode = "android-" + re.sub(r"[^a-z ]", "", signing_org.lower()).replace(" ", "-")
+
+os.environ["KOLIBRI_DEBUG"] = "True"
+# os.environ["KOLIBRI_DEBUG_LOG_DATABASE"] = "True"
 os.environ["KOLIBRI_RUN_MODE"] = runmode
 os.environ["KOLIBRI_PROJECT"] = "endless-key-android"
 
