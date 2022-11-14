@@ -8,7 +8,6 @@ from wsgiref.headers import Headers
 from django.contrib.staticfiles import finders
 from django.utils._os import safe_join
 from jnius import autoclass
-from kolibri.utils import kolibri_whitenoise
 from kolibri.utils.kolibri_whitenoise import compressed_file_extensions
 from kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
 from kolibri.utils.kolibri_whitenoise import FileFinder
@@ -223,8 +222,3 @@ class DynamicWhiteNoise(WhiteNoise):
     @classmethod
     def decode_locations(cls, locations):
         return [(prefix, cls.decode_root(root)) for prefix, root in locations]
-
-
-def monkeypatch_whitenoise():
-    logger.info("Applying DynamicWhiteNoise workarounds")
-    kolibri_whitenoise.DynamicWhiteNoise = DynamicWhiteNoise

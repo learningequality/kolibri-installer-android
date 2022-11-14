@@ -1,5 +1,3 @@
-from kolibri_android.globals import initialize
+from kolibri_android.remoteshell_service.__main__ import main
 
-initialize()
-
-from kolibri_android.remoteshell_service import *  # noqa F403 F401
+main()

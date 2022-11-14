@@ -1,3 +1,4 @@
+import logging
 import os
 
 from cryptography.hazmat.backends import default_backend
@@ -14,6 +15,19 @@ from twisted.cred import portal
 from twisted.internet import defer
 from twisted.internet import reactor
 from zope.interface import implementer
+
+from ..application import BaseService
+
+
+class RemoteShellService(BaseService):
+    def run(self):
+        logging.info("Starting remoteshell service")
+
+        self._launch_remoteshell()
+
+    def _launch_remoteshell(self, port=4242):
+        reactor.listenTCP(port, _get_manhole_factory(globals()))
+        reactor.run()
 
 
 def get_key_pair(refresh=False):
@@ -109,8 +123,3 @@ def _get_manhole_factory(namespace):
     f.privateKeys[b"ssh-rsa"] = keys.Key.fromString(private_rsa)
 
     return f
-
-
-def launch_remoteshell(port=4242):
-    reactor.listenTCP(port, _get_manhole_factory(globals()))
-    reactor.run()
