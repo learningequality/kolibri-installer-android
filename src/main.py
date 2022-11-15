@@ -247,7 +247,7 @@ def start_kolibri_with_usb():
 
 def start_kolibri():
     # we need to initialize Kolibri to allow us to access the app key
-    initialize()
+    initialize(debug=True)
 
     interface.register(share_file=share_by_intent)
 

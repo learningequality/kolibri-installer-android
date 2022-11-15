@@ -9,7 +9,7 @@ logging.info("Starting Kolibri task workers")
 # ensure the service stays running by "foregrounding" it with a persistent notification
 make_service_foreground("Kolibri service", "Running tasks.")
 
-initialize(skip_update=True)
+initialize(debug=True, skip_update=True)
 
 from kolibri.core.tasks.main import initialize_workers  # noqa: E402
 from kolibri.core.analytics.tasks import schedule_ping  # noqa: E402
