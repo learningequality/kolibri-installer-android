@@ -1,6 +1,6 @@
 # Dockerfile for use with Toolbox
 
-FROM registry.endlessm-sf.com/eos-toolbox:master
+FROM docker.io/endlessm/eos-toolbox:master
 
 # Install the dependencies for the build system
 RUN export DEBIAN_FRONTEND=noninteractive && \
