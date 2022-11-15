@@ -1,6 +1,6 @@
 # Dockerfile for build
 
-FROM registry.endlessm-sf.com/eos:master
+FROM docker.io/endlessm/eos:master
 
 # Install the dependencies for the build system
 RUN export DEBIAN_FRONTEND=noninteractive && \
