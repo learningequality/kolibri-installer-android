@@ -10,7 +10,17 @@ def kolibri_version():
     """
     with open("./src/kolibri/VERSION", "r") as version_file:
         # p4a only likes digits and decimals
-        return version_file.read().strip()
+        version = version_file.read().strip()
+        # For git dev builds, shorten the version by removing date details:
+        if "+git" not in version:
+            return version
+        return version.split("+git")[0]
+
+
+def explore_plugin_version():
+    with open("./_explore/kolibri_explore_plugin/__init__.py", "r") as version_file:
+        # The __init.py file always has the plugin version between quotes:
+        return version_file.read().split('"')[1]
 
 
 def commit_hash():
@@ -49,7 +59,9 @@ def apk_version():
     Schema: [kolibri version]-[android installer version or githash]-[build signature type]
     """
     android_version_indicator = git_tag() or commit_hash()
-    return "{}-{}".format(kolibri_version(), android_version_indicator)
+    return "{}-{}-{}".format(
+        explore_plugin_version(), kolibri_version(), android_version_indicator
+    )
 
 
 def build_number():
