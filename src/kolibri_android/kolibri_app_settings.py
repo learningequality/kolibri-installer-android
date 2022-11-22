@@ -9,5 +9,5 @@ SESSION_COOKIE_AGE = 52560000
 
 
 MIDDLEWARE = list(MIDDLEWARE) + [  # noqa F405
-    "middleware.AlwaysAuthenticatedMiddleware"
+    "kolibri_android.middleware.AlwaysAuthenticatedMiddleware"
 ]

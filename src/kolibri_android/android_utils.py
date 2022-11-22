@@ -22,7 +22,8 @@ from jnius import autoclass
 from jnius import cast
 from jnius import JavaException
 from jnius import jnius
-from runnable import Runnable
+
+from .runnable import Runnable
 
 
 logger = logging.getLogger(__name__)
