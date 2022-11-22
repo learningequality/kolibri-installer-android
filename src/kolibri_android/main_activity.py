@@ -15,9 +15,6 @@ from kolibri.utils.server import ZeroConfPlugin
 from kolibri.utils.server import ZipContentServerPlugin
 from magicbus.plugins import SimplePlugin
 
-from . import (
-    initialization,
-)  # noqa: F401 keep this first, to ensure we're set up for other imports
 from .android_utils import choose_endless_key_uris
 from .android_utils import get_endless_key_uris
 from .android_utils import has_any_external_storage_device
@@ -29,6 +26,7 @@ from .android_utils import share_by_intent
 from .android_utils import start_service
 from .android_utils import StartupState
 from .android_utils import stat_file
+from .initialization import set_content_fallback_dirs_env
 from .runnable import Runnable
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
@@ -244,7 +242,7 @@ def start_kolibri_with_usb():
 
     provision_endless_key_database(key_uris)
     set_endless_key_uris(key_uris)
-    initialization.set_content_fallback_dirs_env()
+    set_content_fallback_dirs_env()
     start_kolibri()
 
 

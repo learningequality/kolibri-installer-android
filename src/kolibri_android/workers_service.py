@@ -1,8 +1,8 @@
 import logging
 
-import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
-from android_utils import make_service_foreground
 from kolibri.main import initialize
+
+from .android_utils import make_service_foreground
 
 logging.info("Starting Kolibri task workers")
 
