@@ -4,10 +4,8 @@ import re
 import sys
 from pathlib import Path
 
-from jnius import autoclass
-
 from .android_utils import apply_android_workarounds
-from .android_utils import get_activity
+from .android_utils import get_android_node_id
 from .android_utils import get_endless_key_uris
 from .android_utils import get_home_folder
 from .android_utils import get_signature_key_issuing_organization
@@ -71,9 +69,7 @@ def initialize():
         "collections"
     ).as_posix()
 
-    Secure = autoclass("android.provider.Settings$Secure")
-
-    node_id = Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
+    node_id = get_android_node_id()
 
     # Don't set this if the retrieved id is falsy, too short, or a specific
     # id that is known to be hardcoded in many devices.

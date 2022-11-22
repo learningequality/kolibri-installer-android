@@ -42,6 +42,7 @@ NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
+Secure = autoclass("android.provider.Settings$Secure")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
@@ -103,6 +104,10 @@ def get_service():
 
 def get_timezone_name():
     return Timezone.getDefault().getDisplayName()
+
+
+def get_android_node_id():
+    return Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
 
 
 def start_service(service_name, service_args=None):
