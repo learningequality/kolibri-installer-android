@@ -3,7 +3,6 @@ import os
 import re
 from importlib.util import find_spec
 
-from ..globals import SCRIPT_PATH
 from .android_utils import get_android_node_id
 from .android_utils import get_endless_key_uris
 from .android_utils import get_home_folder
@@ -11,6 +10,7 @@ from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
 from .android_whitenoise import DynamicWhiteNoise
+from .globals import SCRIPT_PATH
 
 logger = logging.getLogger(__name__)
 
