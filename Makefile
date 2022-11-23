@@ -146,12 +146,12 @@ p4a_android_distro: needs-android-dirs
 
 .PHONY: needs-version
 needs-version: src/kolibri
-	$(eval APK_VERSION ?= $(shell python3 scripts/version.py apk_version))
-	$(eval APK_BUILD_NUMBER ?= $(shell python3 scripts/version.py build_number))
+	$(eval VERSION_NAME ?= $(shell python3 scripts/version.py version_name))
+	$(eval VERSION_CODE ?= $(shell python3 scripts/version.py version_code))
 
 dist/version.json: needs-version
 	mkdir -p dist
-	echo '{"versionCode": "$(APK_BUILD_NUMBER)", "versionName": "$(APK_VERSION)"}' > $@
+	echo '{"versionCode": "$(VERSION_CODE)", "versionName": "$(VERSION_NAME)"}' > $@
 
 DIST_DEPS = \
 	p4a_android_distro \
@@ -170,17 +170,17 @@ kolibri.apk: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build APK"
-	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
+	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION).apk dist/kolibri-release-$(APK_VERSION).apk
+	mv kolibri-release-$(VERSION_NAME).apk dist/kolibri-release-$(VERSION_NAME).apk
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 kolibri.apk.unsigned: $(DIST_DEPS)
 	@echo "--- :android: Build APK (unsigned)"
-	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
+	$(P4A) apk $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-debug-$(APK_VERSION).apk dist/kolibri-debug-$(APK_VERSION).apk
+	mv kolibri-debug-$(VERSION_NAME).apk dist/kolibri-debug-$(VERSION_NAME).apk
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
@@ -190,9 +190,9 @@ kolibri.aab: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build AAB"
-	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(APK_BUILD_NUMBER)
+	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(APK_VERSION).aab dist/kolibri-release-$(APK_VERSION).aab
+	mv kolibri-release-$(VERSION_NAME).aab dist/kolibri-release-$(VERSION_NAME).aab
 
 # DOCKER BUILD
 
