@@ -1,4 +1,4 @@
-from kolibri_android.initialization import initialize
+from kolibri_android.globals import initialize
 
 initialize()
 
