@@ -5,16 +5,9 @@ import stat
 from urllib.parse import urlparse
 from wsgiref.headers import Headers
 
-from android_utils import document_exists
-from android_utils import document_tree_join
-from android_utils import get_activity
-from android_utils import is_document_uri
-from android_utils import open_file
-from android_utils import stat_file
 from django.contrib.staticfiles import finders
 from django.utils._os import safe_join
 from jnius import autoclass
-from kolibri.utils import kolibri_whitenoise
 from kolibri.utils.kolibri_whitenoise import compressed_file_extensions
 from kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
 from kolibri.utils.kolibri_whitenoise import FileFinder
@@ -25,6 +18,13 @@ from whitenoise.responders import MissingFileError
 from whitenoise.responders import NOT_ALLOWED_RESPONSE
 from whitenoise.responders import Response
 from whitenoise.string_utils import decode_path_info
+
+from .android_utils import document_exists
+from .android_utils import document_tree_join
+from .android_utils import get_activity
+from .android_utils import is_document_uri
+from .android_utils import open_file
+from .android_utils import stat_file
 
 logger = logging.getLogger(__name__)
 
@@ -222,8 +222,3 @@ class DynamicWhiteNoise(WhiteNoise):
     @classmethod
     def decode_locations(cls, locations):
         return [(prefix, cls.decode_root(root)) for prefix, root in locations]
-
-
-def monkeypatch_whitenoise():
-    logger.info("Applying DynamicWhiteNoise workarounds")
-    kolibri_whitenoise.DynamicWhiteNoise = DynamicWhiteNoise
