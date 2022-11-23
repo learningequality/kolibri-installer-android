@@ -94,6 +94,16 @@ class MainActivity(BaseActivity):
             Runnable(self._on_loading_ready),
         )
 
+    def on_activity_stopped(self, activity):
+        super().on_activity_stopped(activity)
+        if self._kolibri_bus is not None:
+            self._kolibri_bus.transition("STOP")
+
+    def on_activity_resumed(self, activity):
+        super().on_activity_resumed(activity)
+        if self._kolibri_bus is not None:
+            self._kolibri_bus.transition("RUN")
+
     def run(self):
         self.load_url("file:///android_asset/_load.html")
 
