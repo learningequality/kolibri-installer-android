@@ -8,7 +8,7 @@ pipeline {
 
     parameters {
         string(
-            name: 'VERSION',
+            name: 'VERSION_CODE',
             description: 'Version code to promote',
             trim: true,
         )
@@ -31,7 +31,7 @@ pipeline {
                     trackName: params.TRACK,
                     // Use an already uploaded version
                     fromVersionCode: true,
-                    versionCodes: params.VERSION,
+                    versionCodes: params.VERSION_CODE,
                 )
             }
         }
@@ -39,16 +39,16 @@ pipeline {
 
     post {
         always {
-            buildDescription("${params.VERSION} ${params.TRACK}")
+            buildDescription("${params.VERSION_CODE} ${params.TRACK}")
         }
 
         success {
             emailext (
                 to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
                 replyTo: 'apps@endlessos.org',
-                subject: "Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}",
+                subject: "Released org.endlessos.Key ${params.VERSION_CODE} to ${params.TRACK}",
                 body: """\
-Released org.endlessos.Key ${params.VERSION} to ${params.TRACK}.
+Released org.endlessos.Key ${params.VERSION_CODE} to ${params.TRACK}.
 
 See Jenkins job \$PROJECT_NAME build \$BUILD_NUMBER for details.
 
