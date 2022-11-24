@@ -148,10 +148,11 @@ p4a_android_distro: needs-android-dirs
 needs-version: src/kolibri
 	$(eval VERSION_NAME ?= $(shell python3 scripts/version.py version_name))
 	$(eval VERSION_CODE ?= $(shell python3 scripts/version.py version_code))
+	$(eval EK_VERSION ?= $(shell python3 scripts/version.py ek_version))
 
 dist/version.json: needs-version
 	mkdir -p dist
-	echo '{"versionCode": "$(VERSION_CODE)", "versionName": "$(VERSION_NAME)"}' > $@
+	echo '{"versionCode": "$(VERSION_CODE)", "versionName": "$(VERSION_NAME)", "ekVersion": "$(EK_VERSION)"}' > $@
 
 DIST_DEPS = \
 	p4a_android_distro \
@@ -172,7 +173,7 @@ kolibri.apk: $(DIST_DEPS)
 	@echo "--- :android: Build APK"
 	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(VERSION_NAME).apk dist/kolibri-release-$(VERSION_NAME).apk
+	mv kolibri-release-$(VERSION_NAME).apk dist/kolibri-release-$(EK_VERSION).apk
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
@@ -180,7 +181,7 @@ kolibri.apk.unsigned: $(DIST_DEPS)
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-debug-$(VERSION_NAME).apk dist/kolibri-debug-$(VERSION_NAME).apk
+	mv kolibri-debug-$(VERSION_NAME).apk dist/kolibri-debug-$(EK_VERSION).apk
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
@@ -192,7 +193,7 @@ kolibri.aab: $(DIST_DEPS)
 	@echo "--- :android: Build AAB"
 	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(VERSION_NAME).aab dist/kolibri-release-$(VERSION_NAME).aab
+	mv kolibri-release-$(VERSION_NAME).aab dist/kolibri-release-$(EK_VERSION).aab
 
 # DOCKER BUILD
 

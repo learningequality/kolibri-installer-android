@@ -57,6 +57,14 @@ def get_version_name():
     """
     Returns the user-visible version to be used for the Android app.
     """
+    with open("./VERSION", "r") as version_file:
+        return version_file.read().strip()
+
+
+def get_ek_version():
+    """
+    Returns the user-visible version to be used for the Android app.
+    """
     android_version_indicator = git_tag() or commit_hash()
     return "{}-{}-{}".format(
         explore_plugin_version(), kolibri_version(), android_version_indicator
@@ -86,5 +94,7 @@ def get_version_code():
 if __name__ == "__main__":
     if sys.argv[1] == "version_name":
         print(get_version_name())
+    elif sys.argv[1] == "ek_version":
+        print(get_ek_version())
     elif sys.argv[1] == "version_code":
         print(get_version_code())
