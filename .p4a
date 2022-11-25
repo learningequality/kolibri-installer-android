@@ -11,7 +11,6 @@
 --allow-minsdk-ndkapi-mismatch
 --permission ACCESS_NETWORK_STATE
 --permission FOREGROUND_SERVICE
---service workers:workers.py
 --service remoteshell:remoteshell.py
 --presplash assets/presplash.png
 --presplash-color #F15A22
