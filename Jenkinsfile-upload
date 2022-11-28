@@ -72,7 +72,7 @@ properties. For example:</p>
         always {
             script {
                 def version = readJSON(file: 'dist/version.json')
-                buildDescription("${version.versionCode} ${version.versionName}")
+                buildDescription("${version.versionCode} ${version.versionName} ${version.ekVersion}")
             }
         }
 

@@ -53,10 +53,17 @@ def git_tag():
     return p.communicate()[0].rstrip()
 
 
-def apk_version():
+def get_version_name():
     """
-    Returns the version to be used for the Kolibri Android app.
-    Schema: [kolibri version]-[android installer version or githash]-[build signature type]
+    Returns the user-visible version to be used for the Android app.
+    """
+    with open("./VERSION", "r") as version_file:
+        return version_file.read().strip()
+
+
+def get_ek_version():
+    """
+    Returns the user-visible version to be used for the Android app.
     """
     android_version_indicator = git_tag() or commit_hash()
     return "{}-{}-{}".format(
@@ -64,10 +71,12 @@ def apk_version():
     )
 
 
-def build_number():
+def get_version_code():
     """
-    Returns the build number for the apk. This is the mechanism used to understand whether one
-    build is newer than another. Uses jenkins build number with time as local dev backup
+    Returns the version code for the build. This is the mechanism
+    used by Android to understand whether one build is newer than
+    another. Uses jenkins build number with time as fallback for local
+    builds.
     """
 
     # At one point a release was made from the PR job, which had a build
@@ -83,7 +92,9 @@ def build_number():
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "apk_version":
-        print(apk_version())
-    elif sys.argv[1] == "build_number":
-        print(build_number())
+    if sys.argv[1] == "version_name":
+        print(get_version_name())
+    elif sys.argv[1] == "ek_version":
+        print(get_ek_version())
+    elif sys.argv[1] == "version_code":
+        print(get_version_code())
