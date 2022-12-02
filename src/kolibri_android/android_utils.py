@@ -46,6 +46,7 @@ Secure = autoclass("android.provider.Settings$Secure")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
+FirebaseApp = autoclass("com.google.firebase.FirebaseApp")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 RELEASE = ANDROID_VERSION.RELEASE
@@ -661,6 +662,10 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     get_activity().startActivity(_send_intent)
     _send_intent = None
 
+def init_firebase_app():
+    app_context = get_service().getApplication().getApplicationContext()
+    FirebaseApp.initializeApp(app_context)
+
 
 def make_service_foreground(title, message):
     global _notification_builder
@@ -697,7 +702,12 @@ def make_service_foreground(title, message):
     )
     _notification_intent.setAction(Intent.ACTION_MAIN)
     _notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
-    intent = PendingIntent.getActivity(service, 0, _notification_intent, 0)
+
+    intent_flag = 0
+    if SDK_INT >= 31:
+        intent_flag = PendingIntent.FLAG_IMMUTABLE
+
+    intent = PendingIntent.getActivity(service, 0, _notification_intent, intent_flag)
     _notification_builder.setContentIntent(intent)
     _notification_builder.setSmallIcon(Drawable.icon)
     _notification_builder.setAutoCancel(True)

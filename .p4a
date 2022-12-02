@@ -29,6 +29,7 @@
 --enable-androidx
 --enable-google-services
 --add-gradle-plugin com.google.firebase.crashlytics:com.google.firebase:firebase-crashlytics-gradle:2.9.2
---depend com.google.firebase:firebase-crashlytics:18.3.1
---depend com.google.firebase:firebase-crashlytics-ndk:18.3.1
---enable-crashlytics-native-symbol-upload
+--depend com.google.firebase:firebase-crashlytics:18.3.2
+--depend com.google.firebase:firebase-crashlytics-ndk:18.3.2
+--depend com.google.firebase:firebase-analytics:21.2.0
+--with-debug-symbols
