@@ -2,6 +2,7 @@ import logging
 import sys
 import traceback
 from pathlib import Path
+
 from jnius import autoclass
 
 from .android_utils import apply_android_workarounds
@@ -12,6 +13,7 @@ SCRIPT_PATH = Path(__file__).absolute().parent.parent
 FirebaseCrashlytics = autoclass("com.google.firebase.crashlytics.FirebaseCrashlytics")
 PythonException = autoclass("org.learningequality.PythonException")
 Arrays = autoclass("java.util.Arrays")
+
 
 def initialize():
     # initialize logging before loading any third-party modules, as they may cause logging to get configured.
@@ -26,9 +28,8 @@ def initialize():
     sys.path.append(SCRIPT_PATH.joinpath("extra-packages").as_posix())
     sys.excepthook = log_exception
 
+
 def log_exception(type, value, tb):
     FirebaseCrashlytics.getInstance().recordException(
-        PythonException(
-            Arrays.toString(traceback.format_exception(type, value, tb))
-        )
+        PythonException(Arrays.toString(traceback.format_exception(type, value, tb)))
     )
