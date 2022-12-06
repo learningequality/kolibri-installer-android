@@ -4,19 +4,15 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.webkit.JavascriptInterface;
 import org.kivy.android.PythonActivity;
 
 import android.util.Log;
-import android.widget.LinearLayout;
-
 import java.lang.Runnable;
 
 
@@ -50,21 +46,6 @@ public class FullScreen {
                 if (!mInWelcome && url.contains("loadingScreen/index.html")) {
                     loadingReady.run();
                     mInWelcome = true;
-                }
-
-                if (url.contains("en/explore/#/credits-section")) {
-                    Button button = new Button(mActivity);
-                    button.setText("Crash me");
-                    ViewGroup viewGroup = mActivity.getWindow().getDecorView().findViewById(android.R.id.content);
-                    button.setLayoutParams(new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.MATCH_PARENT));
-
-                    viewGroup.addView(button);
-
-                    button.setOnClickListener(v -> {
-                        throw new RuntimeException("This is a test crash");
-                    });
                 }
             }
         });
