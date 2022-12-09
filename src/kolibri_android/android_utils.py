@@ -46,6 +46,7 @@ Secure = autoclass("android.provider.Settings$Secure")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
+FirebaseApp = autoclass("com.google.firebase.FirebaseApp")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 RELEASE = ANDROID_VERSION.RELEASE
@@ -660,6 +661,11 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     get_activity().startActivity(_send_intent)
     _send_intent = None
+
+
+def init_firebase_app():
+    app_context = get_service().getApplication().getApplicationContext()
+    FirebaseApp.initializeApp(app_context)
 
 
 def make_service_foreground(title, message):
