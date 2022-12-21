@@ -17,10 +17,23 @@ def kolibri_version():
         return version.split("+git")[0]
 
 
+def explore_plugin_version_name():
+    with open("./_explore/kolibri_explore_plugin/VERSION", "r") as version_name_file:
+        return version_name_file.read().strip()
+
+
 def explore_plugin_version():
     with open("./_explore/kolibri_explore_plugin/__init__.py", "r") as version_file:
-        # The __init.py file always has the plugin version between quotes:
+        # The __init__.py file always has the plugin version between quotes:
         return version_file.read().split('"')[1]
+
+
+def explore_plugin_simple_version():
+    full_version = explore_plugin_version()
+    major, minor, patch = full_version.split(".")
+    if patch == "0":
+        return ".".join([major, minor])
+    return full_version
 
 
 def commit_hash():
@@ -57,13 +70,16 @@ def get_version_name():
     """
     Returns the user-visible version to be used for the Android app.
     """
-    with open("./VERSION", "r") as version_file:
-        return version_file.read().strip()
+    return "{} {}-{}".format(
+        explore_plugin_version_name(),
+        explore_plugin_simple_version(),
+        get_version_code(),
+    )
 
 
 def get_ek_version():
     """
-    Returns the user-visible version to be used for the Android app.
+    Returns detailed version of major modules for debugging.
     """
     android_version_indicator = git_tag() or commit_hash()
     return "{}-{}-{}".format(
