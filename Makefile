@@ -171,17 +171,17 @@ kolibri.apk: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build APK"
-	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
+	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(VERSION_NAME).apk dist/kolibri-release-$(EK_VERSION).apk
+	mv "kolibri-release-$(VERSION_NAME).apk" dist/kolibri-release-$(EK_VERSION).apk
 
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 kolibri.apk.unsigned: $(DIST_DEPS)
 	@echo "--- :android: Build APK (unsigned)"
-	$(P4A) apk $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
+	$(P4A) apk $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-debug-$(VERSION_NAME).apk dist/kolibri-debug-$(EK_VERSION).apk
+	mv "kolibri-debug-$(VERSION_NAME).apk" dist/kolibri-debug-$(EK_VERSION).apk
 
 .PHONY: kolibri.aab
 # Build the signed version of the aab
@@ -191,9 +191,9 @@ kolibri.aab: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build AAB"
-	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(VERSION_NAME) --numeric-version=$(VERSION_CODE)
+	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
-	mv kolibri-release-$(VERSION_NAME).aab dist/kolibri-release-$(EK_VERSION).aab
+	mv "kolibri-release-$(VERSION_NAME).aab" dist/kolibri-release-$(EK_VERSION).aab
 
 # DOCKER BUILD
 
