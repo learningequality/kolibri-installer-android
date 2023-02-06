@@ -19,7 +19,7 @@
 --icon-bg assets/icon-bg.png
 --fileprovider-paths src/fileprovider_paths.xml
 --add-asset assets/_load.html:_load.html
---add-asset assets/loadingScreen:loadingScreen
+--add-asset assets/welcomeScreen:welcomeScreen
 --whitelist ./allowlist.txt
 --blacklist ./blocklist.txt
 --add-source src/java/

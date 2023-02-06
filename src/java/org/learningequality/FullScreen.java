@@ -43,7 +43,7 @@ public class FullScreen {
             public void onPageFinished(WebView view, String url) {
                 mWebView.evaluateJavascript("setNeedsPermission(true)", null);
 
-                if (!mInWelcome && url.contains("loadingScreen/index.html")) {
+                if (!mInWelcome && url.contains("welcomeScreen/index.html")) {
                     loadingReady.run();
                     mInWelcome = true;
                 }

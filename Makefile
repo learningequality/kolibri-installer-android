@@ -133,12 +133,12 @@ src/collections: clean-collections collections.zip
 	mv endless-key-collections-main/json/ src/collections
 	rm -rf endless-key-collections-main
 
-clean-loadingScreen:
-	- rm -rf assets/loadingScreen _explore
+clean-welcomeScreen:
+	- rm -rf assets/welcomeScreen _explore
 
-assets/loadingScreen: clean-loadingScreen
+assets/welcomeScreen: clean-welcomeScreen
 	pip install --target=_explore --no-deps kolibri_explore_plugin
-	cp -r _explore/kolibri_explore_plugin/loadingScreen/ assets/
+	cp -r _explore/kolibri_explore_plugin/welcomeScreen/ assets/
 
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
@@ -159,7 +159,7 @@ DIST_DEPS = \
 	src/kolibri \
 	src/apps-bundle \
 	src/collections \
-	assets/loadingScreen \
+	assets/welcomeScreen \
 	needs-version \
 	dist/version.json
 
