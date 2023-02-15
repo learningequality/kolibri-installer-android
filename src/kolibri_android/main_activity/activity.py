@@ -23,12 +23,8 @@ FullScreen = autoclass("org.learningequality.FullScreen")
 
 
 @Runnable
-def configure_webview(
-    activity, load_runnable, load_with_usb_runnable, loading_ready_runnable
-):
-    FullScreen.configureWebview(
-        activity, load_runnable, load_with_usb_runnable, loading_ready_runnable
-    )
+def configure_webview(*args):
+    FullScreen.configureWebview(*args)
 
 
 @Runnable
@@ -55,10 +51,10 @@ def is_endless_key_reachable():
     try:
         # Check if the USB is connected
         stat_file(key_uris.get("db"))
-        evaluate_javascript("setHasUSB(true)")
+        evaluate_javascript("WelcomeApp.setHasUSB(true)")
         return True
     except FileNotFoundError:
-        evaluate_javascript("setHasUSB(false)")
+        evaluate_javascript("WelcomeApp.setHasUSB(false)")
         return False
 
 
@@ -89,8 +85,8 @@ class MainActivity(BaseActivity):
 
         configure_webview(
             PythonActivity.mActivity,
-            Runnable(self._on_load),
-            Runnable(self._on_load_with_usb),
+            Runnable(self._on_start_with_network),
+            Runnable(self._on_start_with_usb),
             Runnable(self._on_loading_ready),
         )
 
@@ -139,10 +135,10 @@ class MainActivity(BaseActivity):
             try:
                 key_uris = choose_endless_key_uris()
             except PermissionsWrongFolderError:
-                evaluate_javascript("show_wrong_folder()")
+                evaluate_javascript("WelcomeApp.ShowPermissionswrongfolder()")
                 return
             except PermissionsCancelledError:
-                evaluate_javascript("show_permissions_cancelled()")
+                evaluate_javascript("WelcomeApp.showPermissionsCancelled()")
                 return
 
         provision_endless_key_database(key_uris)
@@ -150,10 +146,13 @@ class MainActivity(BaseActivity):
 
         self.start_kolibri()
 
-    def _on_load(self):
+    def _on_start_with_network(self):
+        # TODO: Receive packId as parameter, store it in Android app
+        # preferences, and pass it as Explore plugin option through an
+        # environment variable.
         self.TO_RUN_IN_MAIN = self.start_kolibri
 
-    def _on_load_with_usb(self):
+    def _on_start_with_usb(self):
         # TODO: Show grant access view
         self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
 
@@ -161,7 +160,7 @@ class MainActivity(BaseActivity):
         startup_state = StartupState.get_current_state()
         if startup_state == StartupState.FIRST_TIME:
             logging.info("First time")
-            evaluate_javascript("show_welcome()")
+            evaluate_javascript("WelcomeApp.showWelcome()")
 
             self.TO_RUN_IN_MAIN = self.check_has_any_external_storage_device
 
@@ -171,13 +170,15 @@ class MainActivity(BaseActivity):
             # ask again
 
             if not is_endless_key_reachable():
-                evaluate_javascript("show_endless_key_required()")
+                evaluate_javascript("WelcomeApp.showConnectKeyRequired()")
                 self.TO_RUN_IN_MAIN = wait_until_endless_key_is_reachable
             else:
                 self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
 
         else:
             logging.info("Starting network mode")
+            # TODO: Read packId from Android app preferences, and pass
+            # it as Explore plugin option through an environment variable.
             self.TO_RUN_IN_MAIN = self.start_kolibri
 
     def check_has_any_external_storage_device(self):
@@ -187,9 +188,9 @@ class MainActivity(BaseActivity):
         if has_any != self._last_has_any_check:
             self._last_has_any_check = has_any
             if has_any:
-                evaluate_javascript("setHasUSB(true)")
+                evaluate_javascript("WelcomeApp.setHasUSB(true)")
             else:
-                evaluate_javascript("setHasUSB(false)")
+                evaluate_javascript("WelcomeApp.setHasUSB(false)")
         # By returning True the main loop calls this function over and
         # over again, until another function TO_RUN_IN_MAIN is set.
         return True
