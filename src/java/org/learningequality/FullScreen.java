@@ -27,21 +27,21 @@ public class FullScreen {
         mChrome = new MyChrome(activity);
     }
 
-    public static void configureWebview(PythonActivity activity, final Runnable load, final Runnable loadWithUSB, final Runnable loadingReady) {
+    public static void configureWebview(PythonActivity activity, final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
         FullScreen fs = new FullScreen(activity);
-        fs.configure(load, loadWithUSB, loadingReady);
+        fs.configure(startWithNetwork, startWithUSB, loadingReady);
     }
 
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
-    public void configure(final Runnable load, final Runnable loadWithUSB, final Runnable loadingReady) {
+    public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
         mWebView.setWebContentsDebuggingEnabled(true);
         mWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                mWebView.evaluateJavascript("setNeedsPermission(true)", null);
+                mWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
 
                 if (!mInWelcome && url.contains("welcomeScreen/index.html")) {
                     loadingReady.run();
@@ -51,14 +51,17 @@ public class FullScreen {
         });
         mWebView.addJavascriptInterface(new Object() {
             @JavascriptInterface
-            public void load() {
-                load.run();
+            public void startWithNetwork(String packId) {
+                // TODO: How can we pass the packId as parameter to
+                // the startWithNetwork runnable? Logging it for now.
+                Log.v("Endless Key", packId);
+                startWithNetwork.run();
             }
             @JavascriptInterface
-            public void loadWithUSB() {
-                loadWithUSB.run();
+            public void startWithUSB() {
+                startWithUSB.run();
             }
-        } , "EndlessAPI");
+        } , "WelcomeWrapper");
 
         mWebView.setWebChromeClient(mChrome);
         WebSettings webSettings = mWebView.getSettings();
