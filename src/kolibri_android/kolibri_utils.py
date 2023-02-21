@@ -6,6 +6,7 @@ from importlib.util import find_spec
 from .android_utils import get_android_node_id
 from .android_utils import get_endless_key_uris
 from .android_utils import get_home_folder
+from .android_utils import get_initial_content_pack_id
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
@@ -39,6 +40,8 @@ def init_kolibri(**kwargs):
 
     _init_kolibri_env()
     _update_kolibri_content_fallback_dirs()
+    _update_explore_plugin_options()
+
     _monkeypatch_whitenoise()
 
     for plugin_name in DISABLED_PLUGINS:
@@ -95,6 +98,14 @@ def _init_kolibri_env():
     # id that is known to be hardcoded in many devices.
     if node_id and len(node_id) >= 16 and node_id != "9774d56d682e549c":
         os.environ["MORANGO_NODE_ID"] = node_id
+
+
+def _update_explore_plugin_options():
+    pack_id = get_initial_content_pack_id()
+    if pack_id is not None:
+        os.environ["KOLIBRI_INITIAL_CONTENT_PACK"] = pack_id
+    else:
+        os.environ["KOLIBRI_USE_EK_IGUANA_PAGE"] = "1"
 
 
 def _update_kolibri_content_fallback_dirs():

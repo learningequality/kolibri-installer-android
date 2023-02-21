@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.View;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -52,8 +54,10 @@ public class FullScreen {
         mWebView.addJavascriptInterface(new Object() {
             @JavascriptInterface
             public void startWithNetwork(String packId) {
-                // TODO: How can we pass the packId as parameter to
-                // the startWithNetwork runnable? Logging it for now.
+                SharedPreferences sharedPref =  mActivity.getSharedPreferences(mActivity.getPackageName(), Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("initial_content_pack_id", packId);
+                editor.commit();
                 Log.v("Endless Key", packId);
                 startWithNetwork.run();
             }
