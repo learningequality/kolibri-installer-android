@@ -135,7 +135,7 @@ class MainActivity(BaseActivity):
             try:
                 key_uris = choose_endless_key_uris()
             except PermissionsWrongFolderError:
-                evaluate_javascript("WelcomeApp.ShowPermissionswrongfolder()")
+                evaluate_javascript("WelcomeApp.showPermissionsWrongFolder()")
                 return
             except PermissionsCancelledError:
                 evaluate_javascript("WelcomeApp.showPermissionsCancelled()")
@@ -147,13 +147,9 @@ class MainActivity(BaseActivity):
         self.start_kolibri()
 
     def _on_start_with_network(self):
-        # TODO: Receive packId as parameter, store it in Android app
-        # preferences, and pass it as Explore plugin option through an
-        # environment variable.
         self.TO_RUN_IN_MAIN = self.start_kolibri
 
     def _on_start_with_usb(self):
-        # TODO: Show grant access view
         self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
 
     def _on_loading_ready(self):
@@ -177,8 +173,6 @@ class MainActivity(BaseActivity):
 
         else:
             logging.info("Starting network mode")
-            # TODO: Read packId from Android app preferences, and pass
-            # it as Explore plugin option through an environment variable.
             self.TO_RUN_IN_MAIN = self.start_kolibri
 
     def check_has_any_external_storage_device(self):

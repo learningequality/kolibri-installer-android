@@ -164,6 +164,13 @@ def get_home_folder():
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
+def get_initial_content_pack_id():
+    preferences = get_preferences()
+    pack_id = preferences.getString("initial_content_pack_id", None)
+    logger.debug("Initial content pack ID: %s", pack_id)
+    return pack_id
+
+
 def get_endless_key_uris():
     preferences = get_preferences()
     content_uri = preferences.getString("key_content_uri", None)
