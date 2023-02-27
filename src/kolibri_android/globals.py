@@ -1,6 +1,7 @@
 import logging
 import sys
 import traceback
+from functools import partial
 from pathlib import Path
 
 from jnius import autoclass
@@ -26,10 +27,13 @@ def initialize():
     sys.path.append(SCRIPT_PATH.as_posix())
     sys.path.append(SCRIPT_PATH.joinpath("kolibri", "dist").as_posix())
     sys.path.append(SCRIPT_PATH.joinpath("extra-packages").as_posix())
-    sys.excepthook = log_exception
+
+    sys.excepthook = partial(log_exception, default_excepthook=sys.excepthook)
 
 
-def log_exception(type, value, tb):
+def log_exception(type, value, tb, default_excepthook=None):
+    if callable(default_excepthook):
+        default_excepthook(type, value, tb)
     FirebaseCrashlytics.getInstance().recordException(
         PythonException(Arrays.toString(traceback.format_exception(type, value, tb)))
     )
