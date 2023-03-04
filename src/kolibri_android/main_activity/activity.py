@@ -35,11 +35,6 @@ def load_url_in_webview(url):
 
 
 @Runnable
-def get_current_url():
-    return PythonActivity.mWebView.getUrl()
-
-
-@Runnable
 def evaluate_javascript(js_code):
     PythonActivity.mWebView.evaluateJavascript(js_code, None)
 
@@ -130,7 +125,7 @@ class MainActivity(BaseActivity):
         if self._kolibri_bus is None:
             return None
 
-        current_url = get_current_url()
+        current_url = PythonActivity.mWebView.getUrl()
 
         if self._kolibri_bus.is_kolibri_url(current_url):
             last_kolibri_path = (
