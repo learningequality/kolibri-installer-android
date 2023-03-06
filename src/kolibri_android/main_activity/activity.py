@@ -6,7 +6,6 @@ from jnius import autoclass
 
 from ..android_utils import choose_endless_key_uris
 from ..android_utils import get_endless_key_uris
-from ..android_utils import get_preferences
 from ..android_utils import has_any_external_storage_device
 from ..android_utils import PermissionsCancelledError
 from ..android_utils import PermissionsWrongFolderError
@@ -30,7 +29,16 @@ def configure_webview(*args):
 
 
 @Runnable
-def load_url_in_webview(url):
+def load_url_in_webview(url, force_reload=False):
+    current_url = PythonActivity.mWebView.getUrl()
+    # FIXME: Sometimes, load_url_in_webview will be called with a URL that is
+    #        almost the same, except with a different port number for the
+    #        Kolibri backend. This results in a jarring page reload. Instead,
+    #        can we live update the API base URL, or use a custom protocol
+    #        handler?
+    if url == current_url and not force_reload:
+        logging.info("Skip reloading current URL")
+        return
     PythonActivity.mWebView.loadUrl(url)
 
 
@@ -81,6 +89,7 @@ class MainActivity(BaseActivity):
     TO_RUN_IN_MAIN = None
     _last_has_any_check = None
     _kolibri_bus = None
+    _default_kolibri_path = None
 
     def __init__(self):
         super().__init__()
@@ -94,9 +103,6 @@ class MainActivity(BaseActivity):
 
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
-
-        self.save_last_kolibri_path()
-
         if self._kolibri_bus is not None:
             self._kolibri_bus.transition("STOP")
 
@@ -104,6 +110,30 @@ class MainActivity(BaseActivity):
         super().on_activity_resumed(activity)
         if self._kolibri_bus is not None:
             self._kolibri_bus.transition("RUN")
+
+    def on_activity_save_instance_state(self, activity, out_state_bundle):
+        super().on_activity_save_instance_state(activity, out_state_bundle)
+
+        if self._kolibri_bus is None:
+            return None
+
+        current_url = PythonActivity.mWebView.getUrl()
+
+        if self._kolibri_bus.is_kolibri_url(current_url):
+            kolibri_path = urlparse(current_url)._replace(scheme="", netloc="").geturl()
+        else:
+            kolibri_path = None
+
+        # Because of an issue with the on_activity_post_created method, we
+        # have no way to receive saved state when the application starts. So,
+        # we won't bother modifying out_state_bundle here. Instead, we will
+        # simply save kolibri_path as a variable. This takes advantage of the
+        # Python program continuing to run when the activity is stopped. If we
+        # wanted to use the state bundle mechanism, it would look like:
+        # out_state_bundle.putString("kolibri_path", kolibri_path)
+
+        self._default_kolibri_path = kolibri_path
+        logging.info(f"Saved Kolibri path: '{kolibri_path or ''}'")
 
     def run(self):
         self.load_url("file:///android_asset/_load.html")
@@ -117,28 +147,8 @@ class MainActivity(BaseActivity):
                 time.sleep(0.5)
             time.sleep(0.05)
 
-    def read_last_kolibri_path(self):
-        preferences = get_preferences()
-        return preferences.getString("last_kolibri_path", None)
-
-    def save_last_kolibri_path(self):
-        if self._kolibri_bus is None:
-            return None
-
-        current_url = PythonActivity.mWebView.getUrl()
-
-        if self._kolibri_bus.is_kolibri_url(current_url):
-            last_kolibri_path = (
-                urlparse(current_url)._replace(scheme="", netloc="").geturl()
-            )
-        else:
-            last_kolibri_path = None
-
-        logging.info(f"Saving Kolibri path: '{last_kolibri_path or ''}'")
-
-        editor = get_preferences().edit()
-        editor.putString("last_kolibri_path", last_kolibri_path)
-        editor.commit()
+    def get_default_kolibri_path(self):
+        return self._default_kolibri_path
 
     def load_url(self, url):
         load_url_in_webview(url)
