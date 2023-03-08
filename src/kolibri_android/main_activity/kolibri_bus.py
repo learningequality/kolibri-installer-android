@@ -26,6 +26,9 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
         ZipContentServerPlugin(self, self.zip_port).subscribe()
 
     def is_kolibri_url(self, url):
+        if not url:
+            return False
+
         if not self.port:
             return False
 
@@ -59,9 +62,12 @@ class AppPlugin(SimplePlugin):
 
     def SERVING(self, port):
         base_url = "http://127.0.0.1:{port}".format(port=port)
-        initialize_url = interface.get_initialize_url(
-            next_url=self.application.read_last_kolibri_path()
-        )
+        # Work around an issue where interface.get_initialize_url returns ""
+        # if next_url is empty. This is resolved in Kolibri v0.16.0-alpha8:
+        # <https://github.com/learningequality/kolibri/commit/0ed2ccdd5d613e96721f80bc03d8bc56ae7a0e7f>
+        # TODO: Remove this workaround when we update Kolibri.
+        next_url = self.application.get_default_kolibri_path() or "/"
+        initialize_url = interface.get_initialize_url(next_url=next_url)
         logging.info(f"Using initialize URL '{initialize_url}'")
         start_url = urljoin(base_url, initialize_url)
         self.application.load_url(start_url)
