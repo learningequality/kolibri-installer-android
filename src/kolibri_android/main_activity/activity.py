@@ -81,7 +81,8 @@ class MainActivity(BaseActivity):
     TO_RUN_IN_MAIN = None
     _last_has_any_check = None
     _kolibri_bus = None
-    _default_kolibri_path = None
+    _saved_kolibri_path = None
+    _last_kolibri_path = None
 
     def __init__(self):
         super().__init__()
@@ -94,13 +95,30 @@ class MainActivity(BaseActivity):
 
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
-        if self._kolibri_bus is not None:
-            self._kolibri_bus.transition("STOP")
+
+        if self._kolibri_bus.can_transition("IDLE"):
+            # With some versions of Android, the onSaveInstanceState hook will
+            # run after thsi one, so we need to keep track of the webview's
+            # URL before switching to the loading screen.
+            self._last_kolibri_path = self._get_current_kolibri_path()
+            self.show_loading_screen()
+            self._kolibri_bus.transition("IDLE")
+        elif self._kolibri_bus.state != "IDLE":
+            logging.warning(
+                f"Kolibri is unable to stop because its state is '{self._kolibri_bus.state}"
+            )
 
     def on_activity_resumed(self, activity):
         super().on_activity_resumed(activity)
-        if self._kolibri_bus is not None:
-            self._kolibri_bus.transition("RUN")
+
+        if self._kolibri_bus.can_transition("START"):
+            self._last_kolibri_path = None
+            self.show_loading_screen()
+            self._kolibri_bus.transition("START")
+        elif self._kolibri_bus.state != "START":
+            logging.warning(
+                f"Kolibri is unable to start because its state is '{self._kolibri_bus.state}'"
+            )
 
     def on_activity_save_instance_state(self, activity, out_state_bundle):
         super().on_activity_save_instance_state(activity, out_state_bundle)
@@ -108,12 +126,8 @@ class MainActivity(BaseActivity):
         if self._kolibri_bus is None:
             return None
 
-        current_url = PythonActivity.mWebView.getUrl()
-
-        if self._kolibri_bus.is_kolibri_url(current_url):
-            kolibri_path = urlparse(current_url)._replace(scheme="", netloc="").geturl()
-        else:
-            kolibri_path = None
+        kolibri_path = self._last_kolibri_path or self._get_current_kolibri_path()
+        self._last_kolibri_path = None
 
         # Because of an issue with the on_activity_post_created method, we
         # have no way to receive saved state when the application starts. So,
@@ -123,8 +137,17 @@ class MainActivity(BaseActivity):
         # wanted to use the state bundle mechanism, it would look like:
         # out_state_bundle.putString("kolibri_path", kolibri_path)
 
-        self._default_kolibri_path = kolibri_path
+        self._saved_kolibri_path = kolibri_path
         logging.info(f"Saved Kolibri path: '{kolibri_path or ''}'")
+
+    def _get_current_kolibri_path(self):
+        current_url = PythonActivity.mWebView.getUrl()
+        self._last_url = None
+
+        if self._kolibri_bus.is_kolibri_url(current_url):
+            return urlparse(current_url)._replace(scheme="", netloc="").geturl()
+        else:
+            return None
 
     def run(self):
         self.show_loading_screen()
@@ -138,8 +161,8 @@ class MainActivity(BaseActivity):
                 time.sleep(0.5)
             time.sleep(0.05)
 
-    def get_default_kolibri_path(self):
-        return self._default_kolibri_path
+    def get_saved_kolibri_path(self):
+        return self._saved_kolibri_path
 
     def show_loading_screen(self):
         self.replace_url("file:///android_asset/_load.html")

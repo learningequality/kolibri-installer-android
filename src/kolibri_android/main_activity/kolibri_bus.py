@@ -49,6 +49,9 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
 
         return False
 
+    def can_transition(self, to_state: str) -> bool:
+        return (self.state, to_state) in self.transitions
+
 
 class AppPlugin(SimplePlugin):
     def __init__(self, bus, application):
@@ -66,7 +69,7 @@ class AppPlugin(SimplePlugin):
         # if next_url is empty. This is resolved in Kolibri v0.16.0-alpha8:
         # <https://github.com/learningequality/kolibri/commit/0ed2ccdd5d613e96721f80bc03d8bc56ae7a0e7f>
         # TODO: Remove this workaround when we update Kolibri.
-        next_url = self.application.get_default_kolibri_path() or "/"
+        next_url = self.application.get_saved_kolibri_path() or "/"
         initialize_url = interface.get_initialize_url(next_url=next_url)
         logging.info(f"Using initialize URL '{initialize_url}'")
         start_url = urljoin(base_url, initialize_url)
