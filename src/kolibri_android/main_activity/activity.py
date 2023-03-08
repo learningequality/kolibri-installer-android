@@ -25,21 +25,13 @@ FullScreen = autoclass("org.learningequality.FullScreen")
 
 @Runnable
 def configure_webview(*args):
-    FullScreen.configureWebview(*args)
+    FullScreen.initialize(PythonActivity.mActivity)
+    FullScreen.getInstance().configure(*args)
 
 
 @Runnable
-def load_url_in_webview(url, force_reload=False):
-    current_url = PythonActivity.mWebView.getUrl()
-    # FIXME: Sometimes, load_url_in_webview will be called with a URL that is
-    #        almost the same, except with a different port number for the
-    #        Kolibri backend. This results in a jarring page reload. Instead,
-    #        can we live update the API base URL, or use a custom protocol
-    #        handler?
-    if url == current_url and not force_reload:
-        logging.info("Skip reloading current URL")
-        return
-    PythonActivity.mWebView.loadUrl(url)
+def replace_url_in_webview(url):
+    FullScreen.getInstance().replaceUrl(url)
 
 
 @Runnable
@@ -95,7 +87,6 @@ class MainActivity(BaseActivity):
         super().__init__()
 
         configure_webview(
-            PythonActivity.mActivity,
             Runnable(self._on_start_with_network),
             Runnable(self._on_start_with_usb),
             Runnable(self._on_loading_ready),
@@ -136,7 +127,7 @@ class MainActivity(BaseActivity):
         logging.info(f"Saved Kolibri path: '{kolibri_path or ''}'")
 
     def run(self):
-        self.load_url("file:///android_asset/_load.html")
+        self.show_loading_screen()
 
         while True:
             if callable(self.TO_RUN_IN_MAIN):
@@ -150,8 +141,11 @@ class MainActivity(BaseActivity):
     def get_default_kolibri_path(self):
         return self._default_kolibri_path
 
-    def load_url(self, url):
-        load_url_in_webview(url)
+    def show_loading_screen(self):
+        self.replace_url("file:///android_asset/_load.html")
+
+    def replace_url(self, url):
+        replace_url_in_webview(url)
 
     def start_kolibri(self):
         # TODO: Wait until external storage is available

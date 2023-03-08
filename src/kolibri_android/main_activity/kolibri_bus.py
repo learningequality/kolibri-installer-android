@@ -70,4 +70,4 @@ class AppPlugin(SimplePlugin):
         initialize_url = interface.get_initialize_url(next_url=next_url)
         logging.info(f"Using initialize URL '{initialize_url}'")
         start_url = urljoin(base_url, initialize_url)
-        self.application.load_url(start_url)
+        self.application.replace_url(start_url)

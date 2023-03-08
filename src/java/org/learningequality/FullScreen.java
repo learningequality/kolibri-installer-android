@@ -19,19 +19,34 @@ import java.lang.Runnable;
 
 
 public class FullScreen {
+    private static FullScreen fullScreen;
+
     public PythonActivity mActivity;
     public WebView mWebView;
     public MyChrome mChrome;
 
-    public FullScreen(PythonActivity activity) {
+    private boolean clearHistoryOnPageFinished = false;
+
+    private FullScreen(PythonActivity activity) {
         mActivity = activity;
         mWebView = (WebView) activity.getLayout().getChildAt(0);
         mChrome = new MyChrome(activity);
     }
 
-    public static void configureWebview(PythonActivity activity, final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
-        FullScreen fs = new FullScreen(activity);
-        fs.configure(startWithNetwork, startWithUSB, loadingReady);
+    public static void initialize(PythonActivity activity) {
+        fullScreen = new FullScreen(activity);
+    }
+
+    public static FullScreen getInstance() {
+        return fullScreen;
+    }
+
+    public void replaceUrl(String url) {
+        // It is important that we call mWebView.clearHistory after navigation
+        // is completed, so we will set clearHistoryOnPageFinished and do the
+        // work of clearing history in the onPageFinished callback.
+        clearHistoryOnPageFinished = true;
+        mWebView.loadUrl(url);
     }
 
     // Configure the WebView to allow fullscreen based on:
@@ -43,6 +58,11 @@ public class FullScreen {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (clearHistoryOnPageFinished) {
+                    mWebView.clearHistory();
+                    clearHistoryOnPageFinished = false;
+                }
+
                 mWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
 
                 if (!mInWelcome && url.contains("welcomeScreen/index.html")) {
