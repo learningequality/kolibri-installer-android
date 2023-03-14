@@ -101,7 +101,6 @@ class MainActivity(BaseActivity):
             # run after thsi one, so we need to keep track of the webview's
             # URL before switching to the loading screen.
             self._last_kolibri_path = self._get_current_kolibri_path()
-            self.show_loading_screen()
             self._kolibri_bus.transition("IDLE")
         elif self._kolibri_bus.state != "IDLE":
             logging.warning(
@@ -113,7 +112,6 @@ class MainActivity(BaseActivity):
 
         if self._kolibri_bus.can_transition("START"):
             self._last_kolibri_path = None
-            self.show_loading_screen()
             self._kolibri_bus.transition("START")
         elif self._kolibri_bus.state != "START":
             logging.warning(
@@ -150,7 +148,7 @@ class MainActivity(BaseActivity):
             return None
 
     def run(self):
-        self.show_loading_screen()
+        self.replace_url("file:///android_asset/_load.html")
 
         while True:
             if callable(self.TO_RUN_IN_MAIN):
@@ -163,9 +161,6 @@ class MainActivity(BaseActivity):
 
     def get_saved_kolibri_path(self):
         return self._saved_kolibri_path
-
-    def show_loading_screen(self):
-        self.replace_url("file:///android_asset/_load.html")
 
     def replace_url(self, url):
         replace_url_in_webview(url)
