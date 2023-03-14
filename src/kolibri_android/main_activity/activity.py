@@ -96,6 +96,9 @@ class MainActivity(BaseActivity):
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
 
+        if self._kolibri_bus is None:
+            return
+
         if self._kolibri_bus.can_transition("IDLE"):
             # With some versions of Android, the onSaveInstanceState hook will
             # run after thsi one, so we need to keep track of the webview's
@@ -110,6 +113,9 @@ class MainActivity(BaseActivity):
     def on_activity_resumed(self, activity):
         super().on_activity_resumed(activity)
 
+        if self._kolibri_bus is None:
+            return
+
         if self._kolibri_bus.can_transition("START"):
             self._last_kolibri_path = None
             self._kolibri_bus.transition("START")
@@ -122,7 +128,7 @@ class MainActivity(BaseActivity):
         super().on_activity_save_instance_state(activity, out_state_bundle)
 
         if self._kolibri_bus is None:
-            return None
+            return
 
         kolibri_path = self._last_kolibri_path or self._get_current_kolibri_path()
         self._last_kolibri_path = None
