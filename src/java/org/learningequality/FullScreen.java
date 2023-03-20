@@ -112,28 +112,33 @@ public class FullScreen {
 
         mMainWebView.setWebContentsDebuggingEnabled(true);
         mMainWebView.setWebViewClient(new WebViewClient() {
+            boolean isRedirected = false;
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                isRedirected = false;
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? " + url);
-                if (mActivity.tryOpenExternalLink(url)) {
-                    Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? true");
-                    return true;
-                } else {
-                    Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? false");
-                    return false;
-                }
+                isRedirected = true;
+                return mActivity.tryOpenExternalLink(url);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.i("Endless Key", "mMainWebView onPageFinished " + url);
+                if (isRedirected) {
+                    return;
+                }
 
-                mActivity.displayMainWebView();
+                Log.i("Endless Key", "mMainWebView loading finished " + url);
 
                 if (clearHistoryOnPageFinished) {
                     mMainWebView.clearHistory();
                     clearHistoryOnPageFinished = false;
                 }
+
+                mActivity.displayMainWebView();
             }
         });
         mMainWebView.setWebChromeClient(mChrome);
