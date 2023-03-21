@@ -20,35 +20,35 @@ from ..runnable import Runnable
 
 
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
-FullScreen = autoclass("org.learningequality.FullScreen")
+KolibriAndroidHelper = autoclass("org.learningequality.KolibriAndroidHelper")
 
 LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html"
 
 
 @Runnable
 def configure_webview(*args):
-    FullScreen.initialize(PythonActivity.mActivity)
-    FullScreen.getInstance().configure(*args)
+    KolibriAndroidHelper.initialize(PythonActivity.mActivity)
+    KolibriAndroidHelper.getInstance().configure(*args)
 
 
 @Runnable
 def replace_url_in_webview(url):
-    FullScreen.getInstance().replaceUrl(url)
+    KolibriAndroidHelper.getInstance().replaceUrl(url)
 
 
 @Runnable
 def show_loading_page(url):
-    FullScreen.getInstance().showLoadingPage(url)
+    KolibriAndroidHelper.getInstance().showLoadingPage(url)
 
 
 @Runnable
 def evaluate_javascript_in_loading_webview(js_code):
-    FullScreen.getInstance().mLoadingWebView.evaluateJavascript(js_code, None)
+    KolibriAndroidHelper.getInstance().mLoadingWebView.evaluateJavascript(js_code, None)
 
 
 @Runnable
 def set_app_key_cookie(url, app_key):
-    FullScreen.getInstance().setAppKeyCookie(url, app_key)
+    KolibriAndroidHelper.getInstance().setAppKeyCookie(url, app_key)
 
 
 def is_endless_key_reachable():
@@ -159,7 +159,7 @@ class MainActivity(BaseActivity):
         logging.info(f"Saved Kolibri path: '{kolibri_path or ''}'")
 
     def _get_current_kolibri_path(self):
-        current_url = FullScreen.getInstance().getUrl()
+        current_url = KolibriAndroidHelper.getInstance().getUrl()
         self._last_url = None
 
         if self._kolibri_bus.is_kolibri_url(current_url):

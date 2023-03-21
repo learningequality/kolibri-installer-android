@@ -19,10 +19,10 @@ import android.util.Log;
 import java.lang.Runnable;
 
 
-public class FullScreen {
+public class KolibriAndroidHelper {
     private static final String TAG = "Endless Key";
 
-    private static FullScreen fullScreen;
+    private static KolibriAndroidHelper kolibriAndroidHelper;
 
     public PythonActivity mActivity;
     public WebView mMainWebView;
@@ -31,7 +31,7 @@ public class FullScreen {
 
     private boolean clearHistoryOnPageFinished = false;
 
-    private FullScreen(PythonActivity activity) {
+    private KolibriAndroidHelper(PythonActivity activity) {
         mActivity = activity;
         mMainWebView = activity.getMainWebView();
         mLoadingWebView = activity.getLoadingWebView();
@@ -39,11 +39,11 @@ public class FullScreen {
     }
 
     public static void initialize(PythonActivity activity) {
-        fullScreen = new FullScreen(activity);
+        kolibriAndroidHelper = new KolibriAndroidHelper(activity);
     }
 
-    public static FullScreen getInstance() {
-        return fullScreen;
+    public static KolibriAndroidHelper getInstance() {
+        return kolibriAndroidHelper;
     }
 
     public String getUrl() {
@@ -72,7 +72,7 @@ public class FullScreen {
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
     public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
-        Log.i(TAG, "FullScreen configure");
+        Log.i(TAG, "KolibriAndroidHelper configure");
 
         mLoadingWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
