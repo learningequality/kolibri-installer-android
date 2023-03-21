@@ -39,6 +39,11 @@ def evaluate_javascript(js_code):
     PythonActivity.mWebView.evaluateJavascript(js_code, None)
 
 
+@Runnable
+def set_app_key_cookie(url, app_key):
+    FullScreen.getInstance().setAppKeyCookie(url, app_key)
+
+
 def is_endless_key_reachable():
     """
     Check if the KOLIBRI_HOME db file is reachable.
@@ -178,6 +183,13 @@ class MainActivity(BaseActivity):
         init_kolibri(debug=True)
 
         self._kolibri_bus = _build_kolibri_process_bus(self)
+        app_key = self._kolibri_bus.get_app_key()
+        logging.info(f"Setting app key cookie: {app_key}")
+        # Android's CookieManager.setCookie awkwardly asks for a full URL, but
+        # cookies generally apply across all ports for a given hostname, so it
+        # is okay that we give it the expected hostname without specifying a
+        # port.
+        set_app_key_cookie("http://127.0.0.1", app_key)
 
         # start kolibri server
         logging.info("Starting kolibri server.")

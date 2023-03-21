@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.view.View;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -47,6 +48,10 @@ public class FullScreen {
         // work of clearing history in the onPageFinished callback.
         clearHistoryOnPageFinished = true;
         mWebView.loadUrl(url);
+    }
+
+    public void setAppKeyCookie(String url, String appKey) {
+        CookieManager.getInstance().setCookie(url, "app_key_cookie=" + appKey);
     }
 
     // Configure the WebView to allow fullscreen based on:

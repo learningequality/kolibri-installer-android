@@ -1,7 +1,7 @@
-import logging
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
+from kolibri.core.device.models import DeviceAppKey
 from kolibri.plugins.app.utils import interface
 from kolibri.utils.server import BaseKolibriProcessBus
 from kolibri.utils.server import get_urls
@@ -24,6 +24,9 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
         KolibriServerPlugin(self, self.port).subscribe()
 
         ZipContentServerPlugin(self, self.zip_port).subscribe()
+
+    def get_app_key(self):
+        return DeviceAppKey.get_app_key()
 
     def is_kolibri_url(self, url):
         if not url:
@@ -65,12 +68,6 @@ class AppPlugin(SimplePlugin):
 
     def SERVING(self, port):
         base_url = "http://127.0.0.1:{port}".format(port=port)
-        # Work around an issue where interface.get_initialize_url returns ""
-        # if next_url is empty. This is resolved in Kolibri v0.16.0-alpha8:
-        # <https://github.com/learningequality/kolibri/commit/0ed2ccdd5d613e96721f80bc03d8bc56ae7a0e7f>
-        # TODO: Remove this workaround when we update Kolibri.
-        next_url = self.application.get_saved_kolibri_path() or "/"
-        initialize_url = interface.get_initialize_url(next_url=next_url)
-        logging.info(f"Using initialize URL '{initialize_url}'")
-        start_url = urljoin(base_url, initialize_url)
+        next_url = self.application.get_saved_kolibri_path() or ""
+        start_url = urljoin(base_url, next_url)
         self.application.replace_url(start_url)
