@@ -20,6 +20,8 @@ import java.lang.Runnable;
 
 
 public class FullScreen {
+    private static final String TAG = "Endless Key";
+
     private static FullScreen fullScreen;
 
     public PythonActivity mActivity;
@@ -70,7 +72,7 @@ public class FullScreen {
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
     public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
-        Log.i("Endless Key", "FullScreen configure");
+        Log.i(TAG, "FullScreen configure");
 
         mLoadingWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
@@ -82,7 +84,7 @@ public class FullScreen {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.i("Endless Key", "mLoadingWebView onPageFinished " + url);
+                Log.v(TAG, "mLoadingWebView onPageFinished " + url);
 
                 mLoadingWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
 
@@ -99,7 +101,7 @@ public class FullScreen {
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putString("initial_content_pack_id", packId);
                 editor.commit();
-                Log.v("Endless Key", packId);
+                Log.v(TAG, packId);
                 startWithNetwork.run();
             }
             @JavascriptInterface
@@ -131,7 +133,7 @@ public class FullScreen {
                     return;
                 }
 
-                Log.i("Endless Key", "mMainWebView loading finished " + url);
+                Log.i(TAG, "mMainWebView loading finished " + url);
 
                 if (clearHistoryOnPageFinished) {
                     mMainWebView.clearHistory();
