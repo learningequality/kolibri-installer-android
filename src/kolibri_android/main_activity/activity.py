@@ -22,6 +22,8 @@ from ..runnable import Runnable
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 FullScreen = autoclass("org.learningequality.FullScreen")
 
+LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html"
+
 
 @Runnable
 def configure_webview(*args):
@@ -35,8 +37,13 @@ def replace_url_in_webview(url):
 
 
 @Runnable
-def evaluate_javascript(js_code):
-    PythonActivity.mWebView.evaluateJavascript(js_code, None)
+def show_loading_page(url):
+    FullScreen.getInstance().showLoadingPage(url)
+
+
+@Runnable
+def evaluate_javascript_in_loading_webview(js_code):
+    FullScreen.getInstance().mLoadingWebView.evaluateJavascript(js_code, None)
 
 
 @Runnable
@@ -58,10 +65,10 @@ def is_endless_key_reachable():
     try:
         # Check if the USB is connected
         stat_file(key_uris.get("db"))
-        evaluate_javascript("WelcomeApp.setHasUSB(true)")
+        evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(true)")
         return True
     except FileNotFoundError:
-        evaluate_javascript("WelcomeApp.setHasUSB(false)")
+        evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(false)")
         return False
 
 
@@ -109,6 +116,7 @@ class MainActivity(BaseActivity):
             # run after thsi one, so we need to keep track of the webview's
             # URL before switching to the loading screen.
             self._last_kolibri_path = self._get_current_kolibri_path()
+            show_loading_page(LOADING_PAGE_URL)
             self._kolibri_bus.transition("IDLE")
         elif self._kolibri_bus.state != "IDLE":
             logging.warning(
@@ -123,6 +131,7 @@ class MainActivity(BaseActivity):
 
         if self._kolibri_bus.can_transition("START"):
             self._last_kolibri_path = None
+            show_loading_page(LOADING_PAGE_URL)
             self._kolibri_bus.transition("START")
         elif self._kolibri_bus.state != "START":
             logging.warning(
@@ -150,7 +159,7 @@ class MainActivity(BaseActivity):
         logging.info(f"Saved Kolibri path: '{kolibri_path or ''}'")
 
     def _get_current_kolibri_path(self):
-        current_url = PythonActivity.mWebView.getUrl()
+        current_url = FullScreen.getInstance().getUrl()
         self._last_url = None
 
         if self._kolibri_bus.is_kolibri_url(current_url):
@@ -159,8 +168,7 @@ class MainActivity(BaseActivity):
             return None
 
     def run(self):
-        self.replace_url("file:///android_asset/_load.html")
-
+        show_loading_page(LOADING_PAGE_URL)
         while True:
             if callable(self.TO_RUN_IN_MAIN):
                 repeat = self.TO_RUN_IN_MAIN()
@@ -203,10 +211,14 @@ class MainActivity(BaseActivity):
             try:
                 key_uris = choose_endless_key_uris()
             except PermissionsWrongFolderError:
-                evaluate_javascript("WelcomeApp.showPermissionsWrongFolder()")
+                evaluate_javascript_in_loading_webview(
+                    "WelcomeApp.showPermissionsWrongFolder()"
+                )
                 return
             except PermissionsCancelledError:
-                evaluate_javascript("WelcomeApp.showPermissionsCancelled()")
+                evaluate_javascript_in_loading_webview(
+                    "WelcomeApp.showPermissionsCancelled()"
+                )
                 return
 
         provision_endless_key_database(key_uris)
@@ -224,7 +236,7 @@ class MainActivity(BaseActivity):
         startup_state = StartupState.get_current_state()
         if startup_state == StartupState.FIRST_TIME:
             logging.info("First time")
-            evaluate_javascript("WelcomeApp.showWelcome()")
+            evaluate_javascript_in_loading_webview("WelcomeApp.showWelcome()")
 
             self.TO_RUN_IN_MAIN = self.check_has_any_external_storage_device
 
@@ -234,7 +246,9 @@ class MainActivity(BaseActivity):
             # ask again
 
             if not is_endless_key_reachable():
-                evaluate_javascript("WelcomeApp.showConnectKeyRequired()")
+                evaluate_javascript_in_loading_webview(
+                    "WelcomeApp.showConnectKeyRequired()"
+                )
                 self.TO_RUN_IN_MAIN = wait_until_endless_key_is_reachable
             else:
                 self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
@@ -250,9 +264,9 @@ class MainActivity(BaseActivity):
         if has_any != self._last_has_any_check:
             self._last_has_any_check = has_any
             if has_any:
-                evaluate_javascript("WelcomeApp.setHasUSB(true)")
+                evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(true)")
             else:
-                evaluate_javascript("WelcomeApp.setHasUSB(false)")
+                evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(false)")
         # By returning True the main loop calls this function over and
         # over again, until another function TO_RUN_IN_MAIN is set.
         return True

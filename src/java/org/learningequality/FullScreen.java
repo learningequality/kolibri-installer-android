@@ -23,14 +23,16 @@ public class FullScreen {
     private static FullScreen fullScreen;
 
     public PythonActivity mActivity;
-    public WebView mWebView;
+    public WebView mMainWebView;
+    public WebView mLoadingWebView;
     public MyChrome mChrome;
 
     private boolean clearHistoryOnPageFinished = false;
 
     private FullScreen(PythonActivity activity) {
         mActivity = activity;
-        mWebView = (WebView) activity.getLayout().getChildAt(0);
+        mMainWebView = activity.getMainWebView();
+        mLoadingWebView = activity.getLoadingWebView();
         mChrome = new MyChrome(activity);
     }
 
@@ -42,12 +44,23 @@ public class FullScreen {
         return fullScreen;
     }
 
+    public String getUrl() {
+        return mMainWebView.getUrl();
+    }
+
     public void replaceUrl(String url) {
-        // It is important that we call mWebView.clearHistory after navigation
+        // It is important that we call mMainWebView.clearHistory after navigation
         // is completed, so we will set clearHistoryOnPageFinished and do the
         // work of clearing history in the onPageFinished callback.
         clearHistoryOnPageFinished = true;
-        mWebView.loadUrl(url);
+        mActivity.loadUrl(url);
+    }
+
+    public void showLoadingPage(String loadingUrl) {
+        if (loadingUrl != null && !mLoadingWebView.getUrl().equals(loadingUrl)) {
+            mLoadingWebView.loadUrl(loadingUrl);
+        }
+        mActivity.displayLoadingWebView();
     }
 
     public void setAppKeyCookie(String url, String appKey) {
@@ -57,18 +70,21 @@ public class FullScreen {
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
     public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
-        mWebView.setWebContentsDebuggingEnabled(true);
-        mWebView.setWebViewClient(new WebViewClient() {
+        Log.i("Endless Key", "FullScreen configure");
+
+        mLoadingWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
 
             @Override
-            public void onPageFinished(WebView view, String url) {
-                if (clearHistoryOnPageFinished) {
-                    mWebView.clearHistory();
-                    clearHistoryOnPageFinished = false;
-                }
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return mActivity.tryOpenExternalLink(url);
+            }
 
-                mWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                Log.i("Endless Key", "mLoadingWebView onPageFinished " + url);
+
+                mLoadingWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
 
                 if (!mInWelcome && url.contains("welcomeScreen/index.html")) {
                     loadingReady.run();
@@ -76,7 +92,7 @@ public class FullScreen {
                 }
             }
         });
-        mWebView.addJavascriptInterface(new Object() {
+        mLoadingWebView.addJavascriptInterface(new Object() {
             @JavascriptInterface
             public void startWithNetwork(String packId) {
                 SharedPreferences sharedPref =  mActivity.getSharedPreferences(mActivity.getPackageName(), Context.MODE_PRIVATE);
@@ -92,11 +108,37 @@ public class FullScreen {
             }
         } , "WelcomeWrapper");
 
-        mWebView.setWebChromeClient(mChrome);
-        WebSettings webSettings = mWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAppCacheEnabled(true);
+        mLoadingWebView.getSettings().setAllowFileAccess(true);
+
+        mMainWebView.setWebContentsDebuggingEnabled(true);
+        mMainWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? " + url);
+                if (mActivity.tryOpenExternalLink(url)) {
+                    Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? true");
+                    return true;
+                } else {
+                    Log.i("Endless Key", "mMainWebView shouldOverrideUrlLoading? false");
+                    return false;
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                Log.i("Endless Key", "mMainWebView onPageFinished " + url);
+
+                mActivity.displayMainWebView();
+
+                if (clearHistoryOnPageFinished) {
+                    mMainWebView.clearHistory();
+                    clearHistoryOnPageFinished = false;
+                }
+            }
+        });
+        mMainWebView.setWebChromeClient(mChrome);
+
+        mMainWebView.getSettings().setAllowFileAccess(true);
     }
 
     private class MyChrome extends WebChromeClient {
