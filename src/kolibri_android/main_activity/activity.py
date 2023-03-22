@@ -22,7 +22,8 @@ from ..runnable import Runnable
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 KolibriAndroidHelper = autoclass("org.learningequality.KolibriAndroidHelper")
 
-LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html"
+INITIAL_LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html"
+LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html#/loading/default"
 
 
 @Runnable
@@ -168,7 +169,7 @@ class MainActivity(BaseActivity):
             return None
 
     def run(self):
-        show_loading_page(LOADING_PAGE_URL)
+        show_loading_page(INITIAL_LOADING_PAGE_URL)
         while True:
             if callable(self.TO_RUN_IN_MAIN):
                 repeat = self.TO_RUN_IN_MAIN()
