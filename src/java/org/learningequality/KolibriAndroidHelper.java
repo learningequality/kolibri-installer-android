@@ -11,6 +11,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.ConsoleMessage;
 import android.widget.FrameLayout;
 import android.webkit.JavascriptInterface;
 import org.kivy.android.PythonActivity;
@@ -20,7 +21,8 @@ import java.lang.Runnable;
 
 
 public class KolibriAndroidHelper {
-    private static final String TAG = "Endless Key";
+    private static final String TAG = "EndlessKey";
+    private static final String WEB_CONSOLE_TAG = "EKWebConsole";
 
     private static KolibriAndroidHelper kolibriAndroidHelper;
 
@@ -193,5 +195,17 @@ public class KolibriAndroidHelper {
             ((FrameLayout)mActivity.getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
             mActivity.getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
+
+        @Override
+        public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+            String logMessage = consoleMessage.message() + " -- Source: " + consoleMessage.sourceId();
+            if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                Log.e(WEB_CONSOLE_TAG, logMessage);
+            } else {
+                Log.v(WEB_CONSOLE_TAG, logMessage);
+            }
+            return true;
+        }
+
     }
 }
