@@ -12,7 +12,7 @@ pipeline {
         // URL for the Kolibri wheel to include.
         // FIXME: It would be nice to cache this somehow.
         // FIXME: Go back to use an official release once that happens on GitHub for 0.16.
-        KOLIBRI_WHL_URL = 'https://buildkite.com/organizations/learningequality/pipelines/kolibri-python-package/builds/6389/jobs/018385cc-d517-4f48-b281-193b9933d562/artifacts/018385d4-10d6-443b-868e-319b7c4eb2de'
+        KOLIBRI_WHL_URL = 'https://github.com/endlessm/kolibri-explore-plugin/releases/download/v5.8.0/kolibri-0.16.0.dev0+git.20220928203123-py2.py3-none-any.whl'
 
         // Both p4a and gradle cache outputs in the home directory.
         // Point it inside the workspace.
