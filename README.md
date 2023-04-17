@@ -38,6 +38,8 @@ To download a Kolibri WHL file, you can use `make whl=<URL>` from the command li
 
 6. Run `make kolibri.apk.unsigned` to build the apk. Watch for success at the end, or errors, which might indicate missing build dependencies or build errors. If successful, there should be an APK in the `dist/` directory.
 
+PS. If `p4a` command is not found, please check the ticket: ["p4a: command not found"](https://github.com/kivy/python-for-android/issues/1167). If you installed it with `--user`, make sure that `~/.local/bin` is in your `$PATH`.
+
 ## Build on Toolbox
 
 Toolbox allows a mixture of the above build processes by providing a
