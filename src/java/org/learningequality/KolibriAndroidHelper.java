@@ -148,6 +148,14 @@ public class KolibriAndroidHelper {
         mMainWebView.setWebChromeClient(mChrome);
 
         mMainWebView.getSettings().setAllowFileAccess(true);
+
+        enableDesktopMode();
+    }
+
+    private void enableDesktopMode() {
+        mMainWebView.getSettings().setUserAgentString(
+            mMainWebView.getSettings().getUserAgentString().replace("Android", "Human")
+        );
     }
 
     private class MyChrome extends WebChromeClient {
