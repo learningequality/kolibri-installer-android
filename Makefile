@@ -109,6 +109,13 @@ src/kolibri: clean
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
 	patch -d src/ -p1 < patches/0001-Add-track-progress-information-to-channelimport.patch
+	patch -d src/ -p1 < patches/0001-Break-up-DynamicWhiteNoise-code.patch
+
+src/evil_kolibri: src/kolibri
+	mkdir -p src/evil_kolibri/utils
+	touch src/evil_kolibri/__init__.py
+	touch src/evil_kolibri/utils/__init__.py
+	cp src/kolibri/utils/kolibri_whitenoise.py src/evil_kolibri/utils/kolibri_whitenoise.py
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
@@ -157,6 +164,7 @@ dist/version.json: needs-version
 DIST_DEPS = \
 	p4a_android_distro \
 	src/kolibri \
+	src/evil_kolibri \
 	src/apps-bundle \
 	src/collections \
 	assets/welcomeScreen \

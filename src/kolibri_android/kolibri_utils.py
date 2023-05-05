@@ -10,7 +10,7 @@ from .android_utils import get_initial_content_pack_id
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
-from .android_whitenoise import DynamicWhiteNoise
+from .android_whitenoise import AndroidDynamicWhiteNoise
 from .globals import SCRIPT_PATH
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,9 @@ def _update_kolibri_content_fallback_dirs():
     if endless_key_uris is None:
         return
 
-    content_fallback_dirs = DynamicWhiteNoise.encode_root(endless_key_uris["content"])
+    content_fallback_dirs = AndroidDynamicWhiteNoise.encode_root(
+        endless_key_uris["content"]
+    )
 
     logger.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_fallback_dirs)
     os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_fallback_dirs
@@ -124,7 +126,7 @@ def _monkeypatch_whitenoise():
     from kolibri.utils import kolibri_whitenoise
 
     logger.info("Applying DynamicWhiteNoise workarounds")
-    kolibri_whitenoise.DynamicWhiteNoise = DynamicWhiteNoise
+    kolibri_whitenoise.DynamicWhiteNoise = AndroidDynamicWhiteNoise
 
 
 def _kolibri_initialize(**kwargs):
