@@ -40,6 +40,7 @@ FileProvider = autoclass("androidx.core.content.FileProvider")
 FirebaseAnalytics = autoclass("com.google.firebase.analytics.FirebaseAnalytics")
 FirebaseCrashlytics = autoclass("com.google.firebase.crashlytics.FirebaseCrashlytics")
 Intent = autoclass("android.content.Intent")
+Log = autoclass("android.util.Log")
 NotificationBuilder = autoclass("android.app.Notification$Builder")
 NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
@@ -900,3 +901,41 @@ class StartupState(Enum):
         # in other case, the app is initialized but with content downloaded
         # using the network
         return cls.NETWORK_USER
+
+
+class AndroidLogHandler(logging.Handler):
+    """Logging handler dispatching to android.util.Log
+
+    Converts Python logging records to Android log messages viewable
+    with "adb logcat". The handler converts logging levels to log
+    priorities, which allows filtering by priority with logcat or other
+    Android log analysis tools.
+    """
+
+    def __init__(self, tag=None):
+        super().__init__()
+
+        self.tag = tag or get_activity().getPackageName()
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            priority = self.level_to_priority(record.levelno)
+            Log.println(priority, self.tag, msg)
+        except:  # noqa: E722
+            self.handleError(record)
+
+    @staticmethod
+    def level_to_priority(level):
+        if level >= logging.CRITICAL:
+            return Log.ASSERT
+        elif level >= logging.ERROR:
+            return Log.ERROR
+        elif level >= logging.WARNING:
+            return Log.WARN
+        elif level >= logging.INFO:
+            return Log.INFO
+        elif level >= logging.DEBUG:
+            return Log.DEBUG
+        else:
+            return Log.VERBOSE
