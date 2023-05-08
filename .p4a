@@ -5,7 +5,7 @@
 --private "src"
 --local-recipes "p4a-recipes"
 --orientation sensor
---requirements python3,android,pyjnius,genericndkbuild,sqlite3,cryptography,twisted,attrs,bcrypt,service_identity,pyasn1,pyasn1_modules,pyopenssl,openssl,six,liblzma,zstandard,beautifulsoup4==4.10.0,zimply_core,kolibri_explore_plugin,kolibri_zim_plugin
+--requirements python3,android,pyjnius,genericndkbuild,sqlite3,cryptography,twisted,attrs,bcrypt,service_identity,pyasn1,pyasn1_modules,pyopenssl,openssl,six,liblzma,zstandard,beautifulsoup4==4.10.0,zimply_core,kolibri_explore_plugin~=6.0,kolibri_zim_plugin
 --android-api 31
 --minsdk 24
 --allow-minsdk-ndkapi-mismatch
