@@ -7,6 +7,7 @@ from .android_utils import get_android_node_id
 from .android_utils import get_endless_key_uris
 from .android_utils import get_home_folder
 from .android_utils import get_initial_content_pack_id
+from .android_utils import get_logging_config
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
@@ -42,6 +43,7 @@ def init_kolibri(**kwargs):
     _update_kolibri_content_fallback_dirs()
     _update_explore_plugin_options()
 
+    _monkeypatch_kolibri_logging()
     _monkeypatch_whitenoise()
 
     for plugin_name in DISABLED_PLUGINS:
@@ -120,6 +122,19 @@ def _update_kolibri_content_fallback_dirs():
 
     logger.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_fallback_dirs)
     os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_fallback_dirs
+
+
+def _monkeypatch_kolibri_logging():
+    """Monkeypatch kolibri.utils.logger.get_default_logging_config
+
+    Currently this is the only way to fully customize logging in
+    kolibri. Custom Django LOG settings can be used, but that's only
+    applied later when django is initialized.
+    """
+    import kolibri.utils.logger
+
+    logger.info("Monkeypatching kolibri get_default_logging_config")
+    kolibri.utils.logger.get_default_logging_config = get_logging_config
 
 
 def _monkeypatch_whitenoise():

@@ -1,12 +1,15 @@
-import logging
+import os
 import sys
 import traceback
 from functools import partial
+from logging.config import dictConfig
 from pathlib import Path
 
 from jnius import autoclass
 
 from .android_utils import apply_android_workarounds
+from .android_utils import get_log_root
+from .android_utils import get_logging_config
 from .android_utils import setup_analytics
 
 
@@ -19,9 +22,10 @@ Arrays = autoclass("java.util.Arrays")
 
 def initialize():
     # initialize logging before loading any third-party modules, as they may cause logging to get configured.
-    logging.basicConfig(level=logging.DEBUG)
-    jnius_logger = logging.getLogger("jnius")
-    jnius_logger.setLevel(logging.INFO)
+    log_root = get_log_root()
+    os.makedirs(log_root, exist_ok=True)
+    logging_config = get_logging_config(log_root, debug=True)
+    dictConfig(logging_config)
 
     setup_analytics()
     apply_android_workarounds()

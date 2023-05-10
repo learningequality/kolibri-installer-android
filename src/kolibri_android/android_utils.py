@@ -172,6 +172,11 @@ def get_home_folder():
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
+def get_log_root():
+    """Root path for log files"""
+    return os.path.join(get_home_folder(), "logs")
+
+
 def get_initial_content_pack_id():
     preferences = get_preferences()
     pack_id = preferences.getString("initial_content_pack_id", None)
@@ -939,3 +944,96 @@ class AndroidLogHandler(logging.Handler):
             return Log.DEBUG
         else:
             return Log.VERBOSE
+
+
+def get_logging_config(LOG_ROOT, debug=False, debug_database=False):
+    """Logging configuration
+
+    This is customized from
+    kolibri.utils.logger.get_default_logging_config(), which is the
+    basis for the logging configuration used in Kolibri.
+    """
+    # This is the general level
+    DEFAULT_LEVEL = "INFO" if not debug else "DEBUG"
+    DATABASE_LEVEL = "INFO" if not debug_database else "DEBUG"
+    DEFAULT_HANDLERS = ["android", "file"]
+
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        # No filters are used here, but kolibri adds some and expects
+        # the top level filters dict to exist.
+        "filters": {},
+        "formatters": {
+            "simple": {
+                "format": "%(name)s: %(message)s",
+            },
+            "full": {
+                "format": "%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "android": {
+                "class": "kolibri_android.android_utils.AndroidLogHandler",
+                # Since Android loggingthat already has timestamps and
+                # priority levels, they aren't needed here.
+                "formatter": "simple",
+            },
+            "file": {
+                # Kolibri uses a customized version of
+                # logging.handlers.TimedRotatingFileHandler. We don't
+                # want to use that here to avoid importing kolibri too
+                # early. IMO, the regular rotating handler based on size
+                # is better in the Android case so the total disk space
+                # used for logs is managed.
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": os.path.join(LOG_ROOT, "kolibri.txt"),
+                "maxBytes": 5 << 20,  # 5 Mib
+                "backupCount": 5,
+                "formatter": "full",
+            },
+        },
+        "loggers": {
+            "": {
+                "handlers": DEFAULT_HANDLERS,
+                "level": DEFAULT_LEVEL,
+            },
+            "kolibri_android": {
+                # Always log our code at debug level.
+                "level": "DEBUG",
+            },
+            "jnius": {
+                # jnius debug logs are very noisy, so limit it to info.
+                "level": "INFO",
+            },
+            "kolibri": {
+                # kolibri expects the handlers list to exist so it can
+                # append django's email handler.
+                "handlers": [],
+            },
+            # For now, we do not fetch debugging output from this
+            # We should introduce custom debug log levels or log
+            # targets, i.e. --debug-level=high
+            "kolibri.core.tasks.worker": {
+                "level": "INFO",
+            },
+            "django": {
+                # kolibri expects the handlers list to exist so it can
+                # append django's email handler.
+                "handlers": [],
+            },
+            "django.db.backends": {
+                "level": DATABASE_LEVEL,
+            },
+            "django.request": {
+                # kolibri expects the handlers list to exist so it can
+                # append django's email handler.
+                "handlers": [],
+            },
+            "django.template": {
+                # Django template debug is very noisy, only log INFO and above.
+                "level": "INFO",
+            },
+        },
+    }
