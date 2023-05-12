@@ -89,7 +89,11 @@ development environment inside a container.
 ## Debugging the app
 
 ### Server Side
-Run `adb logcat -v brief python:D *:F` to get all debug logs from the Kolibri server
+To get all debug logs from the application, run:
+
+```
+adb logcat '*:F' org.endlessos.Key EndlessKey EKWebConsole python:D PythonActivity:D
+```
 
 ### Client side
 1. Start the Kolibri server via Android app
@@ -157,7 +161,13 @@ builds without polluting production metrics.
 ## Helpful commands
 - [adb](https://developer.android.com/studio/command-line/adb) is pretty helpful. Here are some useful uses:
   - `adb logcat -b all -c` will clear out the device's log. ([Docs](https://developer.android.com/studio/command-line/logcat))
-    - Logcat also has a large variety of filtering options. Check out the docs for those.
+    - Logcat also has a large variety of filtering options. Check out
+      the docs for those. Particularly, the filter `*:S` silences all
+      tags without a filterspec. Combined with a desired tag, this will
+      show only logs from that tag. The `adb` CLI option `-s` is a
+      shorthand for `*:S`, so `adb logcat -s SomeTag` will only show
+      logs from `SomeTag`. Alternatively, `*:F` will show only fatal
+      logs from other tags.
   - Uninstall from terminal using `adb shell pm uninstall org.learningequality.Kolibri`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
 - Docker shouldn't be rebuilding very often, so it shouldn't be using that much storage. But if it does, you can run `docker system prune` to clear out all "dangling" images, containers, and layers. If you've been constantly rebuilding, it will likely get you several gigabytes of storage.
 

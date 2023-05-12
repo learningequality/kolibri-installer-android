@@ -227,7 +227,7 @@ install:
 	$(ADB) install dist/*-debug-*.apk
 
 logcat:
-	$(ADB) logcat | grep -i -E "python|kolibr| `$(ADB) shell ps | grep ' org.endlessos.Key$$' | tr -s [:space:] ' ' | cut -d' ' -f2` " | grep -E -v "WifiTrafficPoller|localhost:5000|NetworkManagementSocketTagger|No jobs to start"
+	$(ADB) logcat '*:F' org.endlessos.Key EndlessKey EKWebConsole python:D PythonActivity:D
 
 $(SDK)/cmdline-tools/latest/bin/sdkmanager:
 	@echo "Downloading Android SDK command line tools"
