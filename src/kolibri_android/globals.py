@@ -1,7 +1,7 @@
+import logging
 import os
 import sys
 import traceback
-from functools import partial
 from logging.config import dictConfig
 from pathlib import Path
 
@@ -11,7 +11,6 @@ from .android_utils import apply_android_workarounds
 from .android_utils import get_log_root
 from .android_utils import get_logging_config
 from .android_utils import setup_analytics
-
 
 SCRIPT_PATH = Path(__file__).absolute().parent.parent
 
@@ -34,12 +33,11 @@ def initialize():
     sys.path.append(SCRIPT_PATH.joinpath("kolibri", "dist").as_posix())
     sys.path.append(SCRIPT_PATH.joinpath("extra-packages").as_posix())
 
-    sys.excepthook = partial(log_exception, default_excepthook=sys.excepthook)
+    sys.excepthook = log_exception
 
 
-def log_exception(type, value, tb, default_excepthook=None):
-    if callable(default_excepthook):
-        default_excepthook(type, value, tb)
+def log_exception(type, value, tb):
+    logging.critical(str(value), exc_info=(type, value, tb))
     FirebaseCrashlytics.getInstance().recordException(
         PythonException(Arrays.toString(traceback.format_exception(type, value, tb)))
     )
