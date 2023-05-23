@@ -7,6 +7,7 @@ from pathlib import Path
 from jnius import autoclass
 
 from .android_utils import apply_android_workarounds
+from .android_utils import setup_analytics
 
 
 SCRIPT_PATH = Path(__file__).absolute().parent.parent
@@ -22,6 +23,7 @@ def initialize():
     jnius_logger = logging.getLogger("jnius")
     jnius_logger.setLevel(logging.INFO)
 
+    setup_analytics()
     apply_android_workarounds()
 
     sys.path.append(SCRIPT_PATH.as_posix())
