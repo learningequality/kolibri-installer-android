@@ -105,6 +105,54 @@ Alternatively, you can debug the webview directly. Modern Android versions shoul
 
 You could also do so using [Weinre](https://people.apache.org/~pmuellr/weinre/docs/latest/Home.html). Visit the site to learn how to install and setup. You will have to build a custom Kolibri .whl file that contains the weinre script tag in the [base.html file](https://github.com/learningequality/kolibri/blob/develop/kolibri/core/templates/kolibri/base.html).
 
+## Firebase Analytics and Crashlytics
+
+Metrics and crashes are collected from the application using Firebase
+[Analytics][firebase_analytics] and [Crashlytics][firebase_crashlytics].
+In order to see details of the information being collected, increase the
+log levels for the relevant tags:
+
+```
+adb shell setprop log.tag.FA VERBOSE
+adb shell setprop log.tag.FA-SVC VERBOSE
+adb shell setprop log.tag.FirebaseCrashlytics DEBUG
+```
+
+Normally the analytics events are cached locally on disk and sent to the
+Firebase server periodically. In order to send the events immediately,
+enable Analytics debug mode for this application:
+
+```
+adb shell setprop debug.firebase.analytics.app org.endlessos.Key
+```
+
+Finally, events can be seen in the Firebase console
+[DebugView][firebase_debugview] in realtime by setting the application
+as the Android [debug app][android_debugapp]. This requires enabling
+`Developer options` on the device, choosing `Select debug app`, and
+setting it to `org.endlessos.Key`.
+
+[firebase_analytics]: https://firebase.google.com/docs/analytics
+[firebase_crashlytics]: https://firebase.google.com/docs/crashlytics
+[firebase_debugview]: https://firebase.google.com/docs/analytics/debugview
+[android_debugapp]: https://developer.android.com/studio/debug/dev-options#debugging
+
+### Enabling or disabling Analytics and Crashlytics
+
+By default, Analytics and Crashlytics are enabled on release builds and
+disabled on debug builds. This prevents development work from polluting
+our production metrics. Event collection can be explicitly enabled or
+disabled at runtime using the `debug.org.endlessos.key.analytics` system
+property. For example:
+
+```
+adb shell setprop debug.org.endlessos.key.analytics true
+```
+
+The primary use case is for testing analytics development on debug
+builds. However, it can also be used to opt out of analytics by setting
+the property value to `false`. This can be used when testing release
+builds without polluting production metrics.
 
 ## Helpful commands
 - [adb](https://developer.android.com/studio/command-line/adb) is pretty helpful. Here are some useful uses:

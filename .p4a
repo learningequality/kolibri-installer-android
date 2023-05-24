@@ -33,3 +33,7 @@
 --depend com.google.firebase:firebase-crashlytics-ndk:18.3.2
 --depend com.google.firebase:firebase-analytics:21.2.0
 --with-debug-symbols
+--debug-manifest-placeholders '[analytics_enabled: "false"]'
+--release-manifest-placeholders '[analytics_enabled: "true"]'
+--meta-data firebase_analytics_collection_enabled=${analytics_enabled}
+--meta-data firebase_crashlytics_collection_enabled=${analytics_enabled}
