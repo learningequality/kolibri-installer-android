@@ -37,3 +37,4 @@
 --release-manifest-placeholders '[analytics_enabled: "true"]'
 --meta-data firebase_analytics_collection_enabled=${analytics_enabled}
 --meta-data firebase_crashlytics_collection_enabled=${analytics_enabled}
+--extra-manifest-application-arguments 'android:gwpAsanMode="always"'
