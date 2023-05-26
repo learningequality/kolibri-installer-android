@@ -84,7 +84,7 @@ development environment inside a container.
 
 ## Running the apk from the terminal
 
-1. Run `adb shell am start -n org.learningequality.Kolibri/org.kivy.android.PythonActivity`
+1. Run `adb shell am start -n org.endlessos.Key/org.kivy.android.PythonActivity`
 
 ## Debugging the app
 
@@ -168,7 +168,7 @@ builds without polluting production metrics.
       shorthand for `*:S`, so `adb logcat -s SomeTag` will only show
       logs from `SomeTag`. Alternatively, `*:F` will show only fatal
       logs from other tags.
-  - Uninstall from terminal using `adb shell pm uninstall org.learningequality.Kolibri`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
+  - Uninstall from terminal using `adb shell pm uninstall org.endlessos.Key`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
 - Docker shouldn't be rebuilding very often, so it shouldn't be using that much storage. But if it does, you can run `docker system prune` to clear out all "dangling" images, containers, and layers. If you've been constantly rebuilding, it will likely get you several gigabytes of storage.
 
 ## Docker Implementation Notes
