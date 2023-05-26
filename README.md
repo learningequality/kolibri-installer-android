@@ -2,6 +2,17 @@
 
 Wraps Kolibri in an android-compatibility layer. Relies on Python-For-Android to build the APK and for compatibility on the Android platform.
 
+## Installing from Google Play Store
+
+The Kolibri application is available in [Google Play Store][play-store]
+as Endless Key using the app ID `org.endlessos.Key`. When installing the
+app for testing or quality assurance, please use [this
+link][play-store-key-referrer]. This will allow Endless users to be
+filtered out of our analytics.
+
+[play-store]: https://play.google.com/store/apps
+[play-store-key-referrer]: https://play.google.com/store/apps/details?id=org.endlessos.Key&referrer=utm_source%3Deos%26utm_campaign%3Dtest
+
 ## Build on Docker
 
 This project was primarily developed on Docker, so this method is more rigorously tested.
