@@ -12,6 +12,7 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from queue import Queue
+from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
 from android.activity import bind
@@ -23,6 +24,7 @@ from jnius import cast
 from jnius import JavaException
 from jnius import jnius
 
+from .referrer import get_referrer_details
 from .runnable import Runnable
 
 
@@ -836,6 +838,46 @@ def apply_android_workarounds():
     _android11_ext_storage_workarounds()
 
 
+def get_referrer_url(context):
+    """Get Google Play referrer URL
+
+    Retrieves the referrer_url value from shared preferences. If that's
+    not set, the URL is queried from the Play Store and stored.
+    """
+    preferences = get_preferences()
+    url = preferences.getString("referrer_url", None)
+    if url is None:
+        details = get_referrer_details(context)
+        if details is not None:
+            url = details.getInstallReferrer()
+            logger.debug(f"Setting referrer_url='{url}'")
+            editor = get_preferences().edit()
+            editor.putString("referrer_url", url)
+            editor.commit()
+
+    logger.info(f"Installed from referrer URL '{url}'")
+    return url
+
+
+def get_referrer_params(context):
+    """Get Google Play referrer UTM parameters"""
+    # A full Google Play URL looks has the UTM parameters URL encoded
+    # within the referrer query parameter. However, it appears that the
+    # Install Referrer API often (always?) returns only the referrer
+    # value URL decoded. Try to handle both possibilities.
+    url = get_referrer_url(context)
+    url_parts = urlparse(url)
+    if url_parts.scheme:
+        # Full URL. Try to get the referrer query parameter value.
+        url_params = dict(parse_qsl(url_parts.query))
+        referrer = url_params.get("referrer", "")
+    else:
+        # Assume the URL is just the referrer value.
+        referrer = url
+
+    return dict(parse_qsl(referrer))
+
+
 def setup_analytics():
     """Enable or disable Firebase Analytics and Crashlytics
 
@@ -845,6 +887,10 @@ def setup_analytics():
     property. For example, `adb shell setprop
     debug.org.endlessos.key.analytics true`.
     """
+    context = get_activity()
+    referrer = get_referrer_params(context)
+    logger.debug(f"Install referrer parameters: {referrer}")
+
     if BuildConfig.DEBUG:
         logger.debug("Debug build, analytics default disabled")
         analytics_default = False
@@ -871,7 +917,6 @@ def setup_analytics():
         "%s Firebase Analytics and Crashlytics",
         "Enabling" if analytics_enabled else "Disabling",
     )
-    context = get_activity()
     analytics = FirebaseAnalytics.getInstance(context)
     crashlytics = FirebaseCrashlytics.getInstance()
     analytics.setAnalyticsCollectionEnabled(analytics_enabled)

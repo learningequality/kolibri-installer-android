@@ -2,6 +2,17 @@
 
 Wraps Kolibri in an android-compatibility layer. Relies on Python-For-Android to build the APK and for compatibility on the Android platform.
 
+## Installing from Google Play Store
+
+The Kolibri application is available in [Google Play Store][play-store]
+as Endless Key using the app ID `org.endlessos.Key`. When installing the
+app for testing or quality assurance, please use [this
+link][play-store-key-referrer]. This will allow Endless users to be
+filtered out of our analytics.
+
+[play-store]: https://play.google.com/store/apps
+[play-store-key-referrer]: https://play.google.com/store/apps/details?id=org.endlessos.Key&referrer=utm_source%3Deos%26utm_campaign%3Dtest
+
 ## Build on Docker
 
 This project was primarily developed on Docker, so this method is more rigorously tested.
@@ -84,7 +95,7 @@ development environment inside a container.
 
 ## Running the apk from the terminal
 
-1. Run `adb shell am start -n org.learningequality.Kolibri/org.kivy.android.PythonActivity`
+1. Run `adb shell am start -n org.endlessos.Key/org.kivy.android.PythonActivity`
 
 ## Debugging the app
 
@@ -168,7 +179,7 @@ builds without polluting production metrics.
       shorthand for `*:S`, so `adb logcat -s SomeTag` will only show
       logs from `SomeTag`. Alternatively, `*:F` will show only fatal
       logs from other tags.
-  - Uninstall from terminal using `adb shell pm uninstall org.learningequality.Kolibri`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
+  - Uninstall from terminal using `adb shell pm uninstall org.endlessos.Key`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
 - Docker shouldn't be rebuilding very often, so it shouldn't be using that much storage. But if it does, you can run `docker system prune` to clear out all "dangling" images, containers, and layers. If you've been constantly rebuilding, it will likely get you several gigabytes of storage.
 
 ## Docker Implementation Notes
