@@ -1,7 +1,14 @@
+#!/usr/bin/env python3
 import os
 import subprocess
 import sys
 import time
+
+
+if "EXPLOREPLUGIN_WHEEL_PATH" in os.environ:
+    EXPLOREPLUGIN_TARGET = "src"
+else:
+    EXPLOREPLUGIN_TARGET = "_explore"
 
 
 def kolibri_version():
@@ -18,12 +25,16 @@ def kolibri_version():
 
 
 def explore_plugin_version_name():
-    with open("./_explore/kolibri_explore_plugin/VERSION", "r") as version_name_file:
+    with open(
+        f"./{EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/VERSION", "r"
+    ) as version_name_file:
         return version_name_file.read().strip()
 
 
 def explore_plugin_version():
-    with open("./_explore/kolibri_explore_plugin/__init__.py", "r") as version_file:
+    with open(
+        f"./{EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/__init__.py", "r"
+    ) as version_file:
         # The __init__.py file always has the plugin version between quotes:
         return version_file.read().split('"')[1]
 
