@@ -127,7 +127,11 @@ src/evil_kolibri: src/kolibri
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
-	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip
+	@ if [ "${APPSBUNDLE_PATH}" = "" ]; then \
+		wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip; \
+	else \
+		cp '${APPSBUNDLE_PATH}' ./apps-bundle.zip; \
+	fi
 
 clean-apps-bundle:
 	- rm -rf src/apps-bundle
