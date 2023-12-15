@@ -176,7 +176,7 @@ jobs:
     - name: Get versionCode
       id: get-version-code
       run: echo "version-code=$(cat .version-code)" >> $GITHUB_OUTPUT
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.get-apk-filename.outputs.apk-file-name }}
         path: dist/${{ steps.get-apk-filename.outputs.apk-file-name }}
