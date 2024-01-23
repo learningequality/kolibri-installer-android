@@ -7,70 +7,33 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.multiprocess.RemoteWorkManager;
 
+import org.learningequality.ContextUtil;
 import org.learningequality.FuturesUtil;
+import org.learningequality.Kolibri.R;
 import org.learningequality.Kolibri.sqlite.JobStorage;
 import org.learningequality.sqlite.query.UpdateQuery;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import java9.util.concurrent.CompletableFuture;
 
 
 public class Reconciler implements AutoCloseable {
     public static final String TAG = "Kolibri.TaskReconciler";
-    public static final String LOCK_FILE = "kolibri_reconciler.lock";
+    private static final AtomicBoolean lock = new AtomicBoolean(false);
 
     private final RemoteWorkManager workManager;
-    private final LockChannel lockChannel;
     private final JobStorage db;
     private final Executor executor;
-    private FileLock lock;
 
-    protected static class LockChannel {
-        private static LockChannel mInstance;
-        private final FileChannel channel;
-
-        public LockChannel(File lockFile) {
-            try {
-                channel = new RandomAccessFile(lockFile, "rw").getChannel();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public FileLock tryLock() {
-            try {
-                return this.channel.tryLock();
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to acquire lock", e);
-                return null;
-            }
-        }
-
-        public static LockChannel getInstance(Context context) {
-            if (mInstance == null) {
-                File lockFile = new File(context.getFilesDir(), LOCK_FILE);
-                mInstance = new LockChannel(lockFile);
-            }
-            return mInstance;
-        }
-    }
-
-
-    public Reconciler(RemoteWorkManager workManager, JobStorage db, LockChannel lockChannel, Executor executor) {
+    public Reconciler(RemoteWorkManager workManager, JobStorage db, Executor executor) {
         this.workManager = workManager;
         this.db = db;
-        this.lockChannel = lockChannel;
         this.executor = executor;
-
     }
 
     /**
@@ -78,29 +41,34 @@ public class Reconciler implements AutoCloseable {
      * @param context The context to use
      * @return A new Reconciler instance
      */
-    public static Reconciler from(Context context, JobStorage db, Executor executor) {
+    public static Reconciler from(Context context, JobStorage db, Executor executor) throws RuntimeException {
+        // Ensure that we're in the task worker process
+        String expectedProcessSuffix = context.getString(R.string.task_worker_process);
+        String currentProcessName = ContextUtil.getCurrentProcessName(context);
+        if (!currentProcessName.endsWith(expectedProcessSuffix)) {
+            throw new RuntimeException("Refusing to create Reconciler in process " + currentProcessName);
+        }
         RemoteWorkManager workManager = RemoteWorkManager.getInstance(context);
-        return new Reconciler(workManager, db, LockChannel.getInstance(context), executor);
+        return new Reconciler(workManager, db, executor);
     }
 
     /**
-     * Attempt to acquire an exclusive lock on the lock file, which will prevent multiple
-     * Reconciler instances from running at the same time, including in different processes.
-     * Also starts a transaction on the database.
+     * Synchronizes on the atomic boolean as a locking mechanism, which will prevent multiple
+     * Reconciler instances from running at the same time. Reconciler.from already prevents this
+     * from running in multiple processes.
      * @return True if the lock was acquired, false otherwise
      */
     public boolean begin() {
         // First get a lock on the lock file
         Log.d(TAG, "Acquiring lock");
-        lock = lockChannel.tryLock();
-        if (lock == null) {
-            Log.d(TAG, "Failed to acquire lock");
-            return false;
+        synchronized (lock) {
+            if (lock.get()) {
+                Log.d(TAG, "Lock already acquired");
+                return false;
+            }
+            lock.set(true);
         }
 
-        // Then start a transaction
-        Log.d(TAG, "Beginning transaction");
-//        db.begin();
         return true;
     }
 
@@ -108,14 +76,9 @@ public class Reconciler implements AutoCloseable {
      * Commit the database transaction and release the lock
      */
     public void end() {
-        Log.d(TAG, "Committing transaction");
-//        db.commit();
-
-        try {
-            Log.d(TAG, "Releasing lock");
-            if (lock != null) lock.release();
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to close and release lock", e);
+        Log.d(TAG, "Releasing lock");
+        synchronized (lock) {
+            lock.set(false);
         }
     }
 
