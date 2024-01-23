@@ -41,6 +41,8 @@ final public class ForegroundWorker extends RemoteListenableWorker implements Wo
         final String id = getId().toString();
         final String arg = getArgument();
 
+        workerImpl.prepare();
+
         // See executor defined in configuration
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) getBackgroundExecutor();
         // This is somewhat similar to what the plain `Worker` class does, except that we
