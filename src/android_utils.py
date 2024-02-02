@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from functools import cache
@@ -10,41 +9,19 @@ from jnius import autoclass
 from jnius import cast
 
 
-def is_service_context():
-    return "PYTHON_SERVICE_ARGUMENT" in os.environ
-
-
-def is_taskworker_context():
-    return "PYTHON_WORKER_ARGUMENT" in os.environ
-
-
 def get_timezone_name():
     Timezone = autoclass("java.util.TimeZone")
     return Timezone.getDefault().getDisplayName()
 
 
-def start_service(service_name, service_args=None):
-    PythonActivity = autoclass("org.kivy.android.PythonActivity")
-    service_args = service_args or {}
-    service = autoclass(
-        "org.learningequality.Kolibri.Service{}".format(service_name.title())
-    )
-    service.start(PythonActivity.mActivity, json.dumps(dict(service_args)))
-
-
-def get_service_args():
-    assert (
-        is_service_context()
-    ), "Cannot get service args, as we are not in a service context."
-    return json.loads(os.environ.get("PYTHON_SERVICE_ARGUMENT") or "{}")
-
-
-def get_package_info(package_name="org.learningequality.Kolibri", flags=0):
-    return get_context().getPackageManager().getPackageInfo(package_name, flags)
-
-
 def get_version_name():
-    return get_package_info().versionName
+    PythonContext = autoclass("org.kivy.android.PythonContext")
+    return PythonContext.getVersionName()
+
+
+def get_node_id():
+    PythonContext = autoclass("org.kivy.android.PythonContext")
+    return PythonContext.getNodeId()
 
 
 @cache
@@ -55,7 +32,8 @@ def get_context():
 
 @cache
 def get_external_files_dir():
-    return get_context().getExternalFilesDir(None).toString()
+    PythonContext = autoclass("org.kivy.android.PythonContext")
+    return PythonContext.getExternalFilesDir()
 
 
 # TODO: check for storage availability, allow user to chose sd card or internal
@@ -145,61 +123,11 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     get_context().startActivity(sendIntent)
 
 
-def make_service_foreground(title, message):
-    service = autoclass("org.kivy.android.PythonService").mService
-    Drawable = autoclass("{}.R$drawable".format(service.getPackageName()))
-    app_context = service.getApplication().getApplicationContext()
-
-    ANDROID_VERSION = autoclass("android.os.Build$VERSION")
-    SDK_INT = ANDROID_VERSION.SDK_INT
-    AndroidString = autoclass("java.lang.String")
-    Context = autoclass("android.content.Context")
-    Intent = autoclass("android.content.Intent")
-    NotificationBuilder = autoclass("android.app.Notification$Builder")
-    NotificationManager = autoclass("android.app.NotificationManager")
-    PendingIntent = autoclass("android.app.PendingIntent")
-    PythonActivity = autoclass("org.kivy.android.PythonActivity")
-
-    if SDK_INT >= 26:
-        NotificationChannel = autoclass("android.app.NotificationChannel")
-        notification_service = cast(
-            NotificationManager,
-            get_context().getSystemService(Context.NOTIFICATION_SERVICE),
-        )
-        channel_id = get_context().getPackageName()
-        app_channel = NotificationChannel(
-            channel_id,
-            "Kolibri Background Server",
-            NotificationManager.IMPORTANCE_DEFAULT,
-        )
-        notification_service.createNotificationChannel(app_channel)
-        notification_builder = NotificationBuilder(app_context, channel_id)
-    else:
-        notification_builder = NotificationBuilder(app_context)
-
-    notification_builder.setContentTitle(AndroidString(title))
-    notification_builder.setContentText(AndroidString(message))
-    notification_intent = Intent(app_context, PythonActivity)
-    notification_intent.setFlags(
-        Intent.FLAG_ACTIVITY_CLEAR_TOP
-        | Intent.FLAG_ACTIVITY_SINGLE_TOP
-        | Intent.FLAG_ACTIVITY_NEW_TASK
-    )
-    notification_intent.setAction(Intent.ACTION_MAIN)
-    notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
-    intent = PendingIntent.getActivity(service, 0, notification_intent, 0)
-    notification_builder.setContentIntent(intent)
-    notification_builder.setSmallIcon(Drawable.icon)
-    notification_builder.setAutoCancel(True)
-    new_notification = notification_builder.getNotification()
-    service.startForeground(1, new_notification)
-
-
 def get_signature_key_issuer():
-    PackageManager = autoclass("android.content.pm.PackageManager")
-    signature = get_package_info(flags=PackageManager.GET_SIGNATURES).signatures[0]
+    PythonContext = autoclass("org.kivy.android.PythonContext")
+    signature = PythonContext.getCertificateInfo()
     cert = x509.load_der_x509_certificate(
-        signature.toByteArray().tostring(), default_backend()
+        signature, default_backend()
     )
 
     return cert.issuer.rfc4514_string()
@@ -222,17 +150,13 @@ def get_dummy_user_name():
     cache_key = "DUMMY_USER_NAME"
     value = value_cache.get(cache_key)
     if value is None:
-        Locale = autoclass("java.util.Locale")
-        currentLocale = Locale.getDefault().toLanguageTag()
+        PythonContext = autoclass("org.kivy.android.PythonContext")
+        currentLocale = PythonContext.getLocale()
         value = get_string("Learner", currentLocale)
         value_cache.set(cache_key, value)
     return value
 
 
 def is_active_network_metered():
-    ConnectivityManager = autoclass("android.net.ConnectivityManager")
-
-    return cast(
-        ConnectivityManager,
-        get_context().getSystemService(get_context().CONNECTIVITY_SERVICE),
-    ).isActiveNetworkMetered()
+    PythonContext = autoclass("org.kivy.android.PythonContext")
+    return PythonContext.isActiveNetworkMetered()
