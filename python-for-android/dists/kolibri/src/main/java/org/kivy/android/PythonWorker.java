@@ -9,11 +9,15 @@ import androidx.annotation.NonNull;
 import java.io.File;
 
 /**
- * Ideally this would be called `PythonWorkerImpl` but the name is used in the native code.
+ * Worker implementation that executes Python code.
+ *
+ * Ideally this would be called `PythonWorkerImpl` but the name is used in the native
+ * python-for-android code.
  */
 public class PythonWorker {
     private static final String TAG = "PythonWorkerImpl";
     // Python environment variables
+    private final Context context;
     private final String pythonName;
     private final String workerEntrypoint;
     private final String androidPrivate;
@@ -22,7 +26,7 @@ public class PythonWorker {
     private final String pythonPath;
 
     public PythonWorker(@NonNull Context context, String pythonName, String workerEntrypoint) {
-        PythonLoader.doLoad(context);
+        this.context = context;
         this.pythonName = pythonName;
         this.workerEntrypoint = workerEntrypoint;
 
@@ -31,6 +35,15 @@ public class PythonWorker {
         androidArgument = appRoot;
         pythonHome = appRoot;
         pythonPath = appRoot + ":" + appRoot + "/lib";
+    }
+
+    /**
+     * Prepare the Python environment.
+     *
+     * This should be called before any calls to `execute`.
+     */
+    public void prepare() {
+        PythonLoader.doLoad(context);
     }
 
     // Native part

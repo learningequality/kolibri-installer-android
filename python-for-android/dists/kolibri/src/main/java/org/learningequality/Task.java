@@ -88,7 +88,14 @@ public class Task {
 
         final AtomicBoolean didReconcile = new AtomicBoolean(false);
         final JobStorage db = JobStorage.readwrite(context);
-        final Reconciler reconciler = Reconciler.from(context, db, executor);
+
+        final Reconciler reconciler;
+        try {
+            reconciler = Reconciler.from(context, db, executor);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to create reconciler", e);
+            return CompletableFuture.completedFuture(false);
+        }
 
         if (db == null) {
             Log.e(Sentinel.TAG, "Failed to open job storage database");

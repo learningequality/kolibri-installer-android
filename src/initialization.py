@@ -4,12 +4,11 @@ import sys
 
 import kolibri  # noqa: F401  Import Kolibri here so we can import modules from dist folder
 import monkey_patch_zeroconf  # noqa: F401 Import this to patch zeroconf
-from android_utils import get_context
 from android_utils import get_home_folder
+from android_utils import get_node_id
 from android_utils import get_signature_key_issuing_organization
 from android_utils import get_timezone_name
 from android_utils import get_version_name
-from jnius import autoclass
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
@@ -38,8 +37,7 @@ os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
 
 def set_node_id():
-    Secure = autoclass("android.provider.Settings$Secure")
-    node_id = Secure.getString(get_context().getContentResolver(), Secure.ANDROID_ID)
+    node_id = get_node_id()
 
     # Don't set this if the retrieved id is falsy, too short, or a specific
     # id that is known to be hardcoded in many devices.

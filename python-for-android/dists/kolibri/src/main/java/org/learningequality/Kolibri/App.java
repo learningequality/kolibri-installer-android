@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Configuration;
 
 import org.kivy.android.PythonContext;
+import org.learningequality.ContextUtil;
 import org.learningequality.notification.NotificationRef;
 
 import java.util.concurrent.Executors;
@@ -27,8 +28,12 @@ public class App extends Application implements Configuration.Provider {
         // Initialize Python context
         PythonContext.getInstance(this);
         createNotificationChannels();
-        // Register activity lifecycle callbacks
-        registerActivityLifecycleCallbacks(new KolibriActivityLifecycleCallbacks());
+
+        String currentProcessName = ContextUtil.getCurrentProcessName(this);
+        if (currentProcessName.endsWith(getString(R.string.task_worker_process))) {
+            // Register activity lifecycle callbacks
+            registerActivityLifecycleCallbacks(new KolibriActivityLifecycleCallbacks());
+        }
         WorkController.getInstance(this).wake();
     }
 

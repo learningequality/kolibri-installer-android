@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.work.ListenableWorker;
 import androidx.work.WorkerParameters;
 
 import org.learningequality.task.Worker;
@@ -23,6 +24,10 @@ final public class BackgroundWorker extends androidx.work.Worker implements Work
     ) {
         super(context, workerParams);
         workerImpl = new PythonWorker(context, "TaskWorker", "taskworker.py");
+
+        // Ideally we wouldn't call this in the constructor, but we can't override `startWork` to
+        // call it just before `doWork` is called.
+        workerImpl.prepare();
     }
 
     /**
