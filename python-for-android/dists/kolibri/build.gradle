@@ -106,7 +106,7 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'androidx.annotation:annotation:1.7.1'
     implementation 'androidx.concurrent:concurrent-futures:1.1.0'
-    implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'androidx.work:work-runtime:2.9.1'
     implementation 'androidx.work:work-multiprocess:2.9.0'
     implementation "androidx.lifecycle:lifecycle-service:2.7.0"
     implementation 'net.sourceforge.streamsupport:java9-concurrent-backport:2.0.5'
