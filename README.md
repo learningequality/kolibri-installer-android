@@ -1,3 +1,5 @@
+# This repository has been archived! The Android app has been moved to the [Kolibri monorepo](https://github.com/learningequality/kolibri/tree/develop/platforms/android)
+
 # Kolibri Android
 
 Android application for Kolibri Learning Platform using Chaquopy for Python integration.
